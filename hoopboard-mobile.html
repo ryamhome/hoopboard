@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>HoopBoard Ultra</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
   --bg:#0B1622;--bg2:#13202F;--or:#F4732A;--or2:#FF9550;
@@ -16,13 +15,19 @@
   --ln:rgba(255,255,255,.06);--ln2:rgba(255,255,255,.1);
   --gn:#3DD68C;--red:#F05252;--yellow:#FBBF24;
   --safe-b:env(safe-area-inset-bottom,0px);
-  --tb-h:62px;
+  --header-h:48px;
+  --chat-h:180px; /* 聊天室高度 */
+  --tb-h:60px;   /* 底部工具列高度 */
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--w);touch-action:none;}
 #app{display:flex;flex-direction:column;height:100%;height:100dvh;}
 
 /* ── HEADER ── */
-header{display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--bg2);border-bottom:1px solid var(--ln);flex-shrink:0;height:48px;gap:8px;z-index:20;position:relative;}
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;background:var(--bg2);border-bottom:1px solid var(--ln);
+  flex-shrink:0;height:var(--header-h);gap:8px;z-index:20;
+}
 .logo{display:flex;align-items:center;gap:6px;}
 .logo-ball{width:26px;height:26px;background:linear-gradient(135deg,var(--or),var(--or2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 0 10px rgba(244,115,42,.5);}
 .logo-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:1px;}
@@ -33,14 +38,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 1
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:pulse 2s infinite;flex-shrink:0;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 .h-btns{display:flex;gap:4px;}
-.h-btn{width:34px;height:34px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:var(--w2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;}
+.h-btn{width:34px;height:34px;border-radius:8px;border:none;background:rgba(255,255,255,.06);color:var(--w2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .h-btn:active{background:rgba(255,255,255,.16);}
 .h-btn.or{background:var(--or);}
 
-/* ── COURT ── */
-.court-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden;background:var(--bg);}
+/* ── MIDDLE: 球場 + 聊天室 (左右分割) ── */
+.middle{flex:1;display:flex;overflow:hidden;position:relative;}
+
+/* 球場區 */
+.court-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden;background:var(--bg);}
 .court-cw{border-radius:10px;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05);}
 canvas{display:block;touch-action:none;}
+
+/* Overlays */
 .sync-pill{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(11,22,34,.9);border:1px solid rgba(61,214,140,.25);border-radius:20px;padding:3px 10px;font-size:10px;color:var(--gn);display:flex;align-items:center;gap:4px;white-space:nowrap;pointer-events:none;}
 .sync-pill.off{color:var(--red);border-color:rgba(240,82,82,.25);}
 .anim-pill{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);background:rgba(11,22,34,.94);border:1px solid var(--ln2);border-radius:10px;padding:5px 12px;display:none;align-items:center;gap:7px;white-space:nowrap;z-index:10;}
@@ -50,8 +60,9 @@ canvas{display:block;touch-action:none;}
 .ap-prog{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--or);min-width:28px;}
 .seq-pill{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);border-radius:9px;padding:5px 12px;display:none;align-items:center;gap:8px;white-space:nowrap;z-index:10;}
 .seq-pill.show{display:flex;}
-.seq-info{font-size:11px;color:var(--yellow);}
+.seq-info{font-size:10px;color:var(--yellow);}
 .sq-btn{padding:4px 10px;border-radius:5px;border:none;font-size:10px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+
 /* Name prompt */
 .npw{display:none;position:absolute;z-index:60;background:var(--bg2);border:1px solid var(--ln2);border-radius:10px;padding:11px;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,.6);}
 .npw label{font-size:10px;color:var(--gr);display:block;margin-bottom:4px;}
@@ -63,6 +74,57 @@ canvas{display:block;touch-action:none;}
 .npw-btns button{flex:1;padding:8px;border-radius:7px;border:none;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
 .np-ok{background:var(--or);color:#fff;font-weight:700;}
 .np-skip{background:rgba(255,255,255,.08);color:var(--w2);border:1px solid var(--ln2);}
+
+/* ── 聊天室（固定顯示在右側，手機直式時在下方）── */
+.chat-panel{
+  width:200px;background:var(--bg2);border-left:1px solid var(--ln);
+  display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;
+}
+/* 手機直式時聊天室改為下方 */
+@media(max-width:600px){
+  .middle{flex-direction:column;}
+  .chat-panel{
+    width:100%;
+    height:var(--chat-h);
+    border-left:none;
+    border-top:1px solid var(--ln);
+    flex-direction:row; /* 橫向排列：訊息+輸入 */
+  }
+  .chat-msgs-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .chat-side{width:160px;display:flex;flex-direction:column;border-left:1px solid var(--ln);flex-shrink:0;}
+}
+.chat-head{
+  display:flex;align-items:center;padding:6px 10px;
+  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--gr);
+  border-bottom:1px solid var(--ln);flex-shrink:0;
+}
+.chat-head-title{display:flex;align-items:center;gap:5px;flex:1;}
+.chat-unread{background:var(--or);color:#fff;border-radius:8px;padding:0 5px;font-size:8px;font-weight:700;display:none;}
+.chat-msgs{flex:1;overflow-y:auto;padding:5px 8px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth;}
+.chat-msgs::-webkit-scrollbar{width:2px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+.msg{display:flex;flex-direction:column;gap:1px;}
+.msg-top{display:flex;align-items:center;gap:3px;}
+.msg-av{width:12px;height:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
+.msg-who{font-size:9px;font-weight:700;color:var(--or);}
+.msg-who.me{color:var(--gn);}
+.msg-when{font-size:8px;color:var(--gr);}
+.msg-body{font-size:10px;padding:3px 6px;background:rgba(255,255,255,.05);border-radius:0 5px 5px 5px;margin-left:15px;line-height:1.4;word-break:break-all;}
+.msg-body.mine{background:rgba(244,115,42,.12);border-radius:5px 0 5px 5px;}
+.msg-stk{font-size:20px;margin-left:15px;}
+.msg-sys{font-size:9px;color:var(--gr);text-align:center;font-style:italic;}
+.msg-likes{margin-left:15px;display:flex;gap:2px;flex-wrap:wrap;margin-top:1px;}
+.like-btn{font-size:9px;padding:1px 4px;border-radius:7px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer;color:var(--gr);}
+.like-btn:active,.like-btn.liked{background:rgba(244,115,42,.15);border-color:var(--or);color:var(--or);}
+.chat-input-area{flex-shrink:0;border-top:1px solid var(--ln);}
+.stk-strip{display:flex;gap:2px;padding:3px 7px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.stk-strip::-webkit-scrollbar{display:none;}
+.stk-btn{font-size:17px;cursor:pointer;padding:2px;border:none;background:transparent;flex-shrink:0;}
+.chat-row{display:flex;gap:4px;padding:4px 7px;}
+.chat-inp{flex:1;padding:6px 8px;background:rgba(255,255,255,.06);border:1px solid var(--ln2);border-radius:7px;color:var(--w);font-size:12px;font-family:'Noto Sans TC',sans-serif;outline:none;}
+.chat-inp:focus{border-color:var(--or);}
+.chat-send{padding:6px 10px;background:var(--or);border:none;border-radius:7px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;}
 
 /* ── BOTTOM TOOLBAR ── */
 .bottom-tb{
@@ -76,99 +138,69 @@ canvas{display:block;touch-action:none;}
 .bottom-tb::-webkit-scrollbar{display:none;}
 .t-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-width:50px;height:54px;border-radius:9px;border:none;
+  min-width:48px;height:52px;border-radius:9px;border:none;
   background:transparent;color:var(--gr);cursor:pointer;
-  gap:3px;transition:all .12s;flex-shrink:0;
+  gap:2px;transition:all .12s;flex-shrink:0;
 }
 .t-btn svg{width:18px;height:18px;}
-.t-btn span{font-size:8.5px;font-weight:600;white-space:nowrap;}
+.t-btn span{font-size:8px;font-weight:600;white-space:nowrap;}
 .t-btn:active{background:rgba(255,255,255,.08);color:var(--w2);}
 .t-btn.act{background:rgba(244,115,42,.2);color:var(--or);}
-.tb-sep{width:1px;height:36px;background:var(--ln);flex-shrink:0;margin:0 2px;}
-.t-color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;margin:0 2px;transition:all .15s;}
+.tb-sep{width:1px;height:34px;background:var(--ln);flex-shrink:0;margin:0 2px;}
+.t-color{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;margin:0 2px;}
 .t-color.act{border-color:#fff;transform:scale(1.12);}
-.t-size{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:46px;flex-shrink:0;}
-.t-size input{width:42px;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+.t-size{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:44px;flex-shrink:0;}
+.t-size input{width:40px;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
 .t-size input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--or);cursor:pointer;}
 .t-size span{font-size:8px;color:var(--gr);}
 
-/* ── BOTTOM SHEET ── */
+/* ── BOTTOM SHEET (戰術/球員/符號選單) ── */
 .sheet-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;}
 .sheet-ov.show{display:block;}
-.sheet{position:fixed;bottom:0;left:0;right:0;z-index:101;background:var(--bg2);border-radius:16px 16px 0 0;border-top:1px solid var(--ln2);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;max-height:78dvh;padding-bottom:var(--safe-b);}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:101;background:var(--bg2);border-radius:16px 16px 0 0;border-top:1px solid var(--ln2);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;max-height:70dvh;padding-bottom:var(--safe-b);}
 .sheet.open{transform:translateY(0);}
 .sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:10px auto 6px;flex-shrink:0;cursor:pointer;}
 .sheet-tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--ln);flex-shrink:0;}
-.s-tab{flex:1;padding:10px 4px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;color:var(--gr);border-bottom:2px solid transparent;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase;}
+.s-tab{flex:1;padding:9px 4px;text-align:center;font-size:10px;font-weight:700;cursor:pointer;color:var(--gr);border-bottom:2px solid transparent;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase;}
 .s-tab.act{color:var(--or);border-bottom-color:var(--or);}
 .sheet-body{flex:1;overflow-y:auto;padding-bottom:6px;}
 .sheet-body::-webkit-scrollbar{display:none;}
-/* Open button */
 .sheet-fab{position:fixed;bottom:calc(var(--tb-h) + var(--safe-b) + 8px);right:10px;width:42px;height:42px;border-radius:50%;background:var(--or);border:none;color:#fff;font-size:17px;cursor:pointer;box-shadow:0 4px 14px rgba(244,115,42,.5);z-index:50;display:flex;align-items:center;justify-content:center;}
 
 /* ── SHEET CONTENT ── */
-.psec{padding:9px 12px;border-bottom:1px solid var(--ln);}
-.psec-title{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gr);margin-bottom:7px;}
-.online-list{display:flex;flex-direction:column;gap:4px;}
+.psec{padding:9px 11px;border-bottom:1px solid var(--ln);}
+.psec-title{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gr);margin-bottom:6px;}
+.ol{display:flex;flex-direction:column;gap:4px;}
 .o-row{display:flex;align-items:center;gap:6px;font-size:11px;}
 .o-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;}
 .o-dot{width:5px;height:5px;border-radius:50%;background:var(--gn);margin-left:auto;}
 .pl{display:flex;flex-direction:column;gap:3px;}
-.pi{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .15s;}
+.pi{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.04);cursor:pointer;}
 .pi:active{background:rgba(255,255,255,.1);}
 .pi.sel{border-color:var(--or);background:rgba(244,115,42,.1);}
-.pd{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;}
+.pd{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;}
 .pi-nw{flex:1;overflow:hidden;}
 .pi-n{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pi-ni{display:none;width:100%;background:transparent;border:none;border-bottom:1px solid var(--or);color:var(--w);font-size:12px;font-family:'Noto Sans TC',sans-serif;outline:none;padding:0;}
-.pi-del{width:28px;height:28px;border:none;background:transparent;color:var(--gr);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0;}
+.pi-ni{display:none;width:100%;background:transparent;border:none;border-bottom:1px solid var(--or);color:var(--w);font-size:11px;font-family:'Noto Sans TC',sans-serif;outline:none;padding:0;}
+.pi-del{width:24px;height:24px;border:none;background:transparent;color:var(--gr);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0;}
 .pi-del:active{background:rgba(240,82,82,.15);color:var(--red);}
 .seq-badge{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;background:rgba(251,191,36,.18);color:var(--yellow);border-radius:4px;padding:1px 4px;flex-shrink:0;}
-.tc-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-.tc{padding:8px 5px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .15s;text-align:center;}
+.tc-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.tc{padding:7px 5px;border-radius:7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .15s;text-align:center;}
 .tc:active{background:rgba(244,115,42,.15);border-color:rgba(244,115,42,.3);}
 .tc.anim{border-color:rgba(61,214,140,.15);}
-.tc.anim:active{background:rgba(61,214,140,.12);}
 .tc.seq{border-color:rgba(251,191,36,.12);}
-.tc.seq:active{background:rgba(251,191,36,.1);}
-.tc-em{font-size:16px;display:block;margin-bottom:2px;}
+.tc-em{font-size:15px;display:block;margin-bottom:2px;}
 .tc-name{font-size:9px;color:var(--gr);line-height:1.3;}
 .tc-badge{font-size:8px;font-weight:700;}
 .tc-badge.g{color:var(--gn);}
 .tc-badge.y{color:var(--yellow);}
-.sym-list{display:flex;flex-direction:column;gap:4px;}
-.sym-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.03);}
+.sym-list{display:flex;flex-direction:column;gap:3px;}
+.sym-item{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;background:rgba(255,255,255,.03);}
 .sym-nm{font-size:10px;font-weight:700;color:var(--w2);}
 .sym-dc{font-size:9px;color:var(--gr);margin-top:1px;}
 
-/* ── CHAT ── */
-.chat-wrap{display:flex;flex-direction:column;height:300px;}
-.chat-msgs{flex:1;overflow-y:auto;padding:7px 10px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth;}
-.msg{display:flex;flex-direction:column;gap:1px;}
-.msg-top{display:flex;align-items:center;gap:3px;}
-.msg-av{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
-.msg-who{font-size:9px;font-weight:700;color:var(--or);}
-.msg-who.me{color:var(--gn);}
-.msg-when{font-size:8px;color:var(--gr);}
-.msg-body{font-size:11px;padding:4px 7px;background:rgba(255,255,255,.05);border-radius:0 6px 6px 6px;margin-left:16px;line-height:1.5;word-break:break-all;}
-.msg-body.mine{background:rgba(244,115,42,.12);border-radius:6px 0 6px 6px;}
-.msg-stk{font-size:24px;margin-left:16px;}
-.msg-sys{font-size:9px;color:var(--gr);text-align:center;font-style:italic;}
-.msg-likes{margin-left:16px;display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;}
-.like-btn{font-size:10px;padding:2px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);cursor:pointer;color:var(--gr);}
-.like-btn:active{background:rgba(244,115,42,.15);border-color:var(--or);color:var(--or);}
-.like-btn.liked{background:rgba(244,115,42,.15);border-color:var(--or);color:var(--or);}
-.chat-ia{flex-shrink:0;border-top:1px solid var(--ln);}
-.stk-strip{display:flex;gap:3px;padding:4px 9px;overflow-x:auto;flex-shrink:0;}
-.stk-strip::-webkit-scrollbar{display:none;}
-.stk-btn{font-size:20px;cursor:pointer;padding:2px;border:none;background:transparent;flex-shrink:0;border-radius:5px;}
-.stk-btn:active{background:rgba(255,255,255,.1);}
-.chat-row{display:flex;gap:5px;padding:5px 9px;}
-.chat-inp{flex:1;padding:8px 10px;background:rgba(255,255,255,.06);border:1px solid var(--ln2);border-radius:8px;color:var(--w);font-size:13px;font-family:'Noto Sans TC',sans-serif;outline:none;}
-.chat-inp:focus{border-color:var(--or);}
-.chat-send{padding:8px 14px;background:var(--or);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;}
-
-/* ── SETUP ── */
+/* SETUP + MODAL */
 .setup-ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
 .setup-box{background:var(--bg2);border:1px solid var(--ln2);border-radius:14px;padding:24px;width:100%;max-width:380px;}
 .setup-box h2{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;margin-bottom:4px;}
@@ -180,7 +212,6 @@ canvas{display:block;touch-action:none;}
 .sor{background:var(--or);color:#fff;}
 .sgh{background:rgba(255,255,255,.08);color:var(--w2);border:1px solid var(--ln2);}
 .s-note{font-size:10px;color:var(--gr);line-height:1.8;background:rgba(255,255,255,.04);border-radius:8px;padding:9px;}
-/* Modal */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center;}
 .modal-ov.show{display:flex;}
 .modal-box{background:var(--bg2);border:1px solid var(--ln2);border-radius:14px 14px 0 0;padding:20px;width:100%;max-width:420px;padding-bottom:calc(20px + var(--safe-b));}
@@ -238,30 +269,56 @@ canvas{display:block;touch-action:none;}
   </div>
 </header>
 
-<!-- COURT -->
-<div class="court-wrap" id="ca">
-  <div class="court-cw" id="cw"><canvas id="court"></canvas></div>
-  <div class="sync-pill" id="sync-pill"><div class="live-dot"></div><span id="sync-txt">連線中...</span></div>
-  <div class="anim-pill" id="anim-pill">
-    <span style="font-size:10px;color:#7A8899" id="anim-lbl">動畫</span>
-    <span class="ap-prog" id="anim-prog">0%</span>
-    <button class="ap-play" id="anim-pb" onclick="toggleAnim()">▶</button>
-    <button class="ap-stop" onclick="stopAnim()">✕</button>
-  </div>
-  <div class="seq-pill" id="seq-pill">
-    <span class="seq-info" id="seq-info">👆 點球員 → 點目標</span>
-    <button class="sq-btn" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)" onclick="clearSeq()">清除</button>
-    <button class="sq-btn" style="background:#F4732A;color:#fff;font-weight:700" onclick="playSeq()">▶播放</button>
-  </div>
-  <div class="npw" id="npw">
-    <label>球員資訊</label>
-    <div class="npw-row">
-      <input class="npw-inp" id="np-n" placeholder="名稱" maxlength="6" autocomplete="off"/>
-      <input class="npw-inp npw-num" id="np-num" placeholder="#" type="number" min="1" max="99"/>
+<!-- MIDDLE: 球場 + 聊天室 -->
+<div class="middle">
+  <!-- 球場 -->
+  <div class="court-area" id="ca">
+    <div class="court-cw" id="cw"><canvas id="court"></canvas></div>
+    <div class="sync-pill" id="sync-pill"><div class="live-dot"></div><span id="sync-txt">連線中...</span></div>
+    <div class="anim-pill" id="anim-pill">
+      <span style="font-size:10px;color:#7A8899" id="anim-lbl">動畫</span>
+      <span class="ap-prog" id="anim-prog">0%</span>
+      <button class="ap-play" id="anim-pb" onclick="toggleAnim()">▶</button>
+      <button class="ap-stop" onclick="stopAnim()">✕</button>
     </div>
-    <div class="npw-btns">
-      <button class="np-skip" onclick="cancelNP()">略過</button>
-      <button class="np-ok" onclick="confirmNP()">確定</button>
+    <div class="seq-pill" id="seq-pill">
+      <span class="seq-info" id="seq-info">👆 點球員 → 點目標</span>
+      <button class="sq-btn" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)" onclick="clearSeq()">清除</button>
+      <button class="sq-btn" style="background:#F4732A;color:#fff;font-weight:700" onclick="playSeq()">▶播放</button>
+    </div>
+    <div class="npw" id="npw">
+      <label>球員資訊</label>
+      <div class="npw-row">
+        <input class="npw-inp" id="np-n" placeholder="名稱" maxlength="6" autocomplete="off"/>
+        <input class="npw-inp npw-num" id="np-num" placeholder="#" type="number" min="1" max="99"/>
+      </div>
+      <div class="npw-btns">
+        <button class="np-skip" onclick="cancelNP()">略過</button>
+        <button class="np-ok" onclick="confirmNP()">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 聊天室（固定顯示！） -->
+  <div class="chat-panel" id="chat-panel">
+    <!-- 手機橫式：垂直排列；手機直式：水平排列 -->
+    <div class="chat-msgs-wrap" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="chat-head">
+        <div class="chat-head-title">
+          💬 聊天室
+          <span class="chat-unread" id="chat-unread">0</span>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg-sys">歡迎使用 HoopBoard Ultra 🏀</div>
+      </div>
+    </div>
+    <div class="chat-side" style="display:flex;flex-direction:column;border-left:none;border-top:1px solid var(--ln);">
+      <div class="stk-strip" id="stk-strip"></div>
+      <div class="chat-row">
+        <input class="chat-inp" id="chat-inp" placeholder="訊息…" maxlength="100" autocomplete="off"/>
+        <button class="chat-send" onclick="sendMsg()">送出</button>
+      </div>
     </div>
   </div>
 </div>
@@ -298,7 +355,7 @@ canvas{display:block;touch-action:none;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg><span style="color:#F05252">刪除</span>
   </button>
   <div class="tb-sep"></div>
-  <div id="tb-colors" style="display:flex;gap:4px;align-items:center;flex-shrink:0"></div>
+  <div id="tb-colors" style="display:flex;gap:3px;align-items:center;flex-shrink:0"></div>
   <div class="tb-sep"></div>
   <div class="t-size">
     <input type="range" min="10" max="28" value="17" id="tb-sz" oninput="setPS(this.value)"/>
@@ -307,7 +364,7 @@ canvas{display:block;touch-action:none;}
 </div>
 </div><!-- app -->
 
-<!-- BOTTOM SHEET -->
+<!-- BOTTOM SHEET (戰術/球員/符號) -->
 <div class="sheet-ov" id="sh-ov" onclick="closeSheet()"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle" onclick="closeSheet()"></div>
@@ -315,7 +372,6 @@ canvas{display:block;touch-action:none;}
     <div class="s-tab act" id="stab-play" onclick="switchTab('play')">🏀 戰術</div>
     <div class="s-tab" id="stab-team" onclick="switchTab('team')">👥 球員</div>
     <div class="s-tab" id="stab-sym" onclick="switchTab('sym')">📖 符號</div>
-    <div class="s-tab" id="stab-chat" onclick="switchTab('chat')">💬 聊天 <span id="chat-badge" style="background:#F4732A;color:#fff;border-radius:8px;padding:0 4px;font-size:8px;display:none">0</span></div>
   </div>
   <div class="sheet-body" id="sh-body"></div>
 </div>
@@ -351,53 +407,84 @@ window.showJoin=()=>document.getElementById('join-area').style.display='block';
 window.joinRoom=()=>{const n=document.getElementById('su-n').value.trim(),c=document.getElementById('su-c').value.trim().toUpperCase();if(!n||!c){alert('請輸入名稱和代碼！');return;}roomId=c;myName=n;myId=Date.now().toString(36)+Math.random().toString(36).slice(2,5);go();};
 const urlRoom=new URLSearchParams(location.search).get('room');
 if(urlRoom){document.getElementById('su-c').value=urlRoom;document.getElementById('join-area').style.display='block';}
+
 function go(){
   document.getElementById('su-ov').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('rc').textContent=roomId;
   document.getElementById('share-link').value=`${location.origin}${location.pathname}?room=${roomId}`;
   initCourtDims();buildColors();buildStickerStrip();render();
+
   if(!db){document.getElementById('sync-txt').textContent='⚠️ 單機模式';document.getElementById('sync-pill').classList.add('off');return;}
   const myColor=AVC[~~(Math.random()*AVC.length)];
   const presRef=ref(db,`rooms/${roomId}/presence/${myId}`);
   set(presRef,{name:myName,color:myColor,online:true,ts:serverTimestamp()});
   onDisconnect(presRef).remove();
+
   onValue(ref(db,`rooms/${roomId}/presence`),snap=>{
     const users=Object.values(snap.val()||{});
     document.getElementById('on-n').textContent=users.length+'人';
     window.__users=users;
-    const el=document.getElementById('online-list-el');if(!el)return;
-    el.innerHTML='';users.forEach((u,i)=>{const r=document.createElement('div');r.className='o-row';const me=u.name===myName?' <span style="color:#F4732A;font-size:8px">（你）</span>':'';r.innerHTML=`<div class="o-av" style="background:${u.color||AVC[i%AVC.length]}">${u.name[0]}</div><span>${u.name}${me}</span><div class="o-dot"></div>`;el.appendChild(r);});
+    const ol=document.getElementById('online-list-el');if(!ol)return;
+    ol.innerHTML='';
+    users.forEach((u,i)=>{const r=document.createElement('div');r.className='o-row';const me=u.name===myName?' <span style="color:#F4732A;font-size:8px">（你）</span>':'';r.innerHTML=`<div class="o-av" style="background:${u.color||AVC[i%AVC.length]}">${u.name[0]}</div><span>${u.name}${me}</span><div class="o-dot"></div>`;ol.appendChild(r);});
   });
+
   onValue(ref(db,`rooms/${roomId}/state`),snap=>{
-    const d=snap.val();if(!d)return;remoteUpdate=true;players=Array.isArray(d.players)?d.players:[];arrows=Array.isArray(d.arrows)?d.arrows:[];screens=Array.isArray(d.screens)?d.screens:[];ball=d.ball||null;remoteUpdate=false;render();
+    const d=snap.val();if(!d)return;remoteUpdate=true;
+    players=Array.isArray(d.players)?d.players:[];arrows=Array.isArray(d.arrows)?d.arrows:[];screens=Array.isArray(d.screens)?d.screens:[];ball=d.ball||null;
+    remoteUpdate=false;render();
   });
+
+  // 聊天室 — 直接監聽，訊息即時顯示
   let fl=true;
   onChildAdded(query(ref(db,`rooms/${roomId}/chat`),limitToLast(60)),snap=>{
     const m=snap.val();if(!m)return;appendMsg(m,snap.key,fl);
     if(fl)return;
-    if(m.uid!==myId){unreadN++;const b=document.getElementById('chat-badge');if(b){b.textContent=unreadN;b.style.display='inline';}}
+    if(m.uid!==myId){
+      unreadN++;
+      const b=document.getElementById('chat-unread');
+      if(b){b.textContent=unreadN;b.style.display='inline-block';}
+    }
   });
   setTimeout(()=>fl=false,1500);
+  document.getElementById('chat-inp').addEventListener('focus',()=>{
+    unreadN=0;const b=document.getElementById('chat-unread');if(b)b.style.display='none';
+  });
+
   onValue(ref(db,`rooms/${roomId}/likes`),snap=>{
     const data=snap.val()||{};document.querySelectorAll('.like-btn').forEach(btn=>{const mk=btn.dataset.mk,em=btn.dataset.em;if(!mk||!em)return;const cnt=data[mk]?data[mk][em]?Object.keys(data[mk][em]).length:0:0;btn.textContent=`${em}${cnt>0?' '+cnt:''}`;btn.classList.toggle('liked',!!(data[mk]&&data[mk][em]&&data[mk][em][myId]));});
   });
+
   document.getElementById('sync-txt').textContent='即時同步中';
   sysMsg(`${myName} 加入了房間 🏀`);
 }
-window.sendMsg=()=>{const inp=document.getElementById('chat-inp-el');if(!inp)return;const t=inp.value.trim();if(!t||!db)return;inp.value='';push(ref(db,`rooms/${roomId}/chat`),{uid:myId,name:myName,text:t,type:'text',ts:Date.now()});};
+
+window.sendMsg=()=>{
+  const inp=document.getElementById('chat-inp'),t=inp.value.trim();
+  if(!t||!db)return;inp.value='';
+  push(ref(db,`rooms/${roomId}/chat`),{uid:myId,name:myName,text:t,type:'text',ts:Date.now()});
+};
 window.sendStk=s=>{if(!db)return;push(ref(db,`rooms/${roomId}/chat`),{uid:myId,name:myName,text:s,type:'stk',ts:Date.now()});};
 window.toggleLike=(mk,em)=>{if(!db)return;import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({get,remove})=>{const lr=ref(db,`rooms/${roomId}/likes/${mk}/${em}/${myId}`);get(lr).then(s=>{s.exists()?remove(lr):set(lr,true);});});};
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('chat-inp')===document.activeElement)window.sendMsg();});
 function sysMsg(t){if(!db)return;push(ref(db,`rooms/${roomId}/chat`),{uid:'__sys__',text:t,type:'sys',ts:Date.now()});}
+
 const AVC2=['#F4732A','#378ADD','#4ADE80','#FACC15','#A78BFA','#F05252','#06B6D4'];
 function appendMsg(m,key,silent){
-  const box=document.getElementById('chat-msgs-el');if(!box)return;
+  const box=document.getElementById('chat-msgs');if(!box)return;
   const el=document.createElement('div');
   if(m.type==='sys'||m.uid==='__sys__'){el.className='msg-sys';el.textContent=m.text;}
-  else{const me=m.uid===myId,t=new Date(m.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});const body=m.type==='stk'?`<div class="msg-stk">${m.text}</div>`:`<div class="msg-body${me?' mine':''}">${esc(m.text)}</div>`;const lks=['👍','❤️','😂'].map(e=>`<button class="like-btn" data-mk="${key}" data-em="${e}" onclick="toggleLike('${key}','${e}')">${e}</button>`).join('');el.className='msg';el.innerHTML=`<div class="msg-top"><div class="msg-av" style="background:${AVC2[m.name?m.name.charCodeAt(0)%AVC2.length:0]}">${(m.name||'?')[0]}</div><span class="msg-who${me?' me':''}">${m.name||'?'}</span><span class="msg-when">${t}</span></div>${body}<div class="msg-likes">${lks}</div>`;}
+  else{
+    const me=m.uid===myId,t=new Date(m.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    const body=m.type==='stk'?`<div class="msg-stk">${m.text}</div>`:`<div class="msg-body${me?' mine':''}">${esc(m.text)}</div>`;
+    const lks=['👍','❤️','😂'].map(e=>`<button class="like-btn" data-mk="${key}" data-em="${e}" onclick="toggleLike('${key}','${e}')">${e}</button>`).join('');
+    el.className='msg';el.innerHTML=`<div class="msg-top"><div class="msg-av" style="background:${AVC2[m.name?m.name.charCodeAt(0)%AVC2.length:0]}">${(m.name||'?')[0]}</div><span class="msg-who${me?' me':''}">${m.name||'?'}</span><span class="msg-when">${t}</span></div>${body}<div class="msg-likes">${lks}</div>`;
+  }
   box.appendChild(el);if(!silent)box.scrollTop=box.scrollHeight;
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
 let pushT=null;
 window.__push=()=>{if(remoteUpdate||!db)return;clearTimeout(pushT);pushT=setTimeout(()=>set(ref(db,`rooms/${roomId}/state`),{players,arrows,ball,screens,by:myName,ts:serverTimestamp()}),80);};
 window.saveTactic=()=>{if(!db){alert('單機模式無法儲存');return;}const n=prompt('戰術名稱：','新戰術')||'新戰術';set(ref(db,`rooms/${roomId}/tactics/${Date.now()}`),{name:n,players,arrows,ball,screens,savedBy:myName});alert('✅ 戰術「'+n+'」已儲存！');};
@@ -405,7 +492,7 @@ window.copyLink=()=>{navigator.clipboard?.writeText(document.getElementById('sha
 window.shareLine=()=>window.open('https://line.me/R/msg/text/?'+encodeURIComponent(document.getElementById('share-link').value));
 </script>
 
-<!-- CANVAS ENGINE -->
+<!-- CANVAS -->
 <script>
 const CV=document.getElementById('court'),ct=CV.getContext('2d');
 let CW,CH,SC,mY,BKL,BKR,KH,FTL,FTR,FTR_,RAR,A3R,C3O,C3D;
@@ -461,7 +548,6 @@ function drawH(mx,my,bk,ftl,d){
   ct.beginPath();ct.arc(bk,mY,m(.225),0,Math.PI*2);ct.strokeStyle='#F4732A';ct.lineWidth=lw()*1.8;ct.stroke();ct.lineWidth=lw();ct.strokeStyle='#fff';
 }
 
-// STATE
 let tool='select',col='#E24B4A',pSize=17;
 let players=[],arrows=[],ball=null,screens=[];
 let sel=null,drawing=false,drag=null,dox,doy,sx,sy,pending=null,pctr=1;
@@ -492,7 +578,6 @@ function buildColors(){
   });
 }
 
-// DRAW
 function drawArrow(a,isSel){
   const{x1,y1,x2,y2,cx,cy,style,color}=a;
   ct.save();ct.strokeStyle=isSel?'#FFD700':(color||'#fff');ct.lineWidth=isSel?2.5:Math.max(1.5,CW/460);
@@ -500,7 +585,7 @@ function drawArrow(a,isSel){
   ct.beginPath();ct.moveTo(x1,y1);
   if(cx!==undefined){ct.quadraticCurveTo(cx,cy,x2,y2);}
   else if(style==='drib'){const dx=x2-x1,dy=y2-y1,n=4;for(let i=0;i<=n;i++){const t=i/n,px=x1+t*dx,py=y1+t*dy,perp=Math.sqrt(dx*dx+dy*dy)||1,off=(i%2===0?1:-1)*m(.3);if(i===0)ct.moveTo(px,py);else ct.quadraticCurveTo(px-dy/perp*off,py+dx/perp*off,px,py);}
-  } else {ct.lineTo(x2,y2);}
+  }else{ct.lineTo(x2,y2);}
   ct.stroke();ct.setLineDash([]);
   const ang=Math.atan2(y2-(cy||y1),x2-(cx||x1)),h=Math.max(8,CW/75);
   ct.fillStyle=isSel?'#FFD700':(color||'#fff');ct.beginPath();ct.moveTo(x2,y2);ct.lineTo(x2-h*Math.cos(ang-.42),y2-h*Math.sin(ang-.42));ct.lineTo(x2-h*Math.cos(ang+.42),y2-h*Math.sin(ang+.42));ct.closePath();ct.fill();
@@ -564,7 +649,6 @@ function updPlayers(){
 }
 window.rmP=(i,e)=>{e.stopPropagation();snap();players.splice(i,1);seqSteps=seqSteps.filter(s=>s.pi!==i).map(s=>({...s,pi:s.pi>i?s.pi-1:s.pi}));if(sel&&sel.type==='ply'&&sel.i===i)sel=null;render();if(window.__push)window.__push();};
 
-// INPUT
 function getPos(e){
   const r=CV.getBoundingClientRect(),sx2=CV.width/r.width,sy2=CV.height/r.height;
   const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;
@@ -597,7 +681,6 @@ window.confirmNP=confirmNP;window.cancelNP=cancelNP;
 document.getElementById('np-n').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('np-num').focus();if(e.key==='Escape')cancelNP();});
 document.getElementById('np-num').addEventListener('keydown',e=>{if(e.key==='Enter')confirmNP();if(e.key==='Escape')cancelNP();});
 
-// Long press for name prompt (mobile)
 let lpTimer=null;
 function hDown(e){
   const pos=getPos(e);document.getElementById('npw').style.display='none';
@@ -612,7 +695,6 @@ function hDown(e){
   if(tool==='screen'){snap();screens.push({x:pos.x,y:pos.y,color:col});sel={type:'scr',i:screens.length-1};render();if(window.__push)window.__push();return;}
   if(tool==='select'){
     const h=hitTest(pos);sel=h;drag=h;if(h){dox=pos.x;doy=pos.y;}
-    // long press to rename
     if(h&&h.type==='ply'){lpTimer=setTimeout(()=>{showNP(players[h.i]);lpTimer=null;},500);}
     render();
   }
@@ -656,10 +738,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Delete'||e.key==='Backspace'
 function clearAll(){snap();players=[];arrows=[];ball=null;screens=[];sel=null;pctr=1;seqSteps=[];render();if(window.__push)window.__push();}
 window.clearAll=clearAll;
 
-// TACTICS
 function loadT(n){
-  snap();clearAll();
-  const cx=CW/2,cy=mY;
+  snap();clearAll();const cx=CW/2,cy=mY;
   if(n==='fb'){players=[{x:cx*.25,y:cy,color:'#E24B4A',num:1,name:'PG',jersey:1},{x:cx*.55,y:cy-CH*.18,color:'#E24B4A',num:2,name:'SF',jersey:3},{x:cx*.55,y:cy+CH*.18,color:'#E24B4A',num:3,name:'SG',jersey:2},{x:cx*.82,y:cy-CH*.12,color:'#E24B4A',num:4,name:'PF',jersey:4},{x:cx*.82,y:cy+CH*.12,color:'#E24B4A',num:5,name:'C',jersey:5}];ball={x:cx*.25,y:cy};arrows=[{x1:cx*.25,y1:cy,x2:cx*.55,y2:cy-CH*.18,color:'#FACC15',style:'pass'},{x1:cx*.55,y1:cy-CH*.18,x2:cx*.3,y2:cy-CH*.26,color:'#E24B4A',style:'run'},{x1:cx*.55,y1:cy+CH*.18,x2:cx*.3,y2:cy+CH*.26,color:'#E24B4A',style:'run'}];}
   else if(n==='pr'){players=[{x:cx*.7,y:cy,color:'#378ADD',num:1,name:'PG',jersey:1},{x:cx*.54,y:cy,color:'#378ADD',num:5,name:'C',jersey:5},{x:cx*.36,y:cy-CH*.28,color:'#378ADD',num:3,name:'SF',jersey:3},{x:cx*.36,y:cy+CH*.28,color:'#378ADD',num:2,name:'SG',jersey:2},{x:cx*.2,y:cy-CH*.12,color:'#378ADD',num:4,name:'PF',jersey:4}];ball={x:cx*.7,y:cy};arrows=[{x1:cx*.7,y1:cy,x2:cx*.44,y2:cy,color:'#FACC15',style:'drib',cx:cx*.57,cy:cy-CH*.08},{x1:cx*.54,y1:cy,x2:cx*.38,y2:cy-CH*.14,color:'#378ADD',style:'run'},{x1:cx*.44,y1:cy,x2:cx*.26,y2:cy-CH*.07,color:'#378ADD',style:'run'}];screens=[{x:cx*.53,y:cy,color:'#378ADD'}];}
   else if(n==='z23'){players=[{x:cx*.62,y:cy-CH*.28,color:'#aaa',num:1,name:''},{x:cx*.38,y:cy-CH*.1,color:'#aaa',num:2,name:''},{x:cx*.38,y:cy+CH*.1,color:'#aaa',num:3,name:''},{x:cx*.18,y:cy-CH*.25,color:'#aaa',num:4,name:''},{x:cx*.18,y:cy+CH*.25,color:'#aaa',num:5,name:''}];}
@@ -671,7 +751,7 @@ function loadT(n){
 }
 window.loadT=loadT;
 
-// ANIMATION
+// ANIM
 let animFrame=null,animT=0,animPlaying=false,animData=null,animStart=null,animSpd=1,animType='preset',seqAnimData=null;
 function toggleAnim(){if(animPlaying){animPlaying=false;cancelAnimationFrame(animFrame);document.getElementById('anim-pb').textContent='▶';}else{animPlaying=true;animStart=null;document.getElementById('anim-pb').textContent='⏸';runAnim();}}
 window.toggleAnim=toggleAnim;
@@ -687,8 +767,7 @@ function runAnim(){
 }
 function lerp(a,b,t){return a+(b-a)*t;}
 function startAnim(n){
-  stopAnim();loadT(n);
-  const cx=CW/2,cy=mY;
+  stopAnim();loadT(n);const cx=CW/2,cy=mY;
   const presets={
     pr:{dur:3000,frames:[{t:0,snap:JSON.parse(JSON.stringify({players,ball}))},{t:.4,mv:[{i:0,x:cx*.44,y:cy},{i:1,x:cx*.38,y:cy-CH*.09}],bl:{x:cx*.44,y:cy}},{t:.7,mv:[{i:0,x:cx*.34,y:cy-CH*.13},{i:1,x:cx*.24,y:cy-CH*.17}],bl:{x:cx*.34,y:cy-CH*.13}},{t:1,mv:[{i:0,x:cx*.22,y:cy-CH*.06}],bl:{x:cx*.2,y:cy-CH*.06}}]},
     fb:{dur:2500,frames:[{t:0,snap:JSON.parse(JSON.stringify({players,ball}))},{t:.3,mv:[{i:1,x:cx*.65,y:cy-CH*.2},{i:2,x:cx*.65,y:cy+CH*.2}],bl:{x:cx*.35,y:cy}},{t:.6,mv:[{i:0,x:cx*.55,y:cy}],bl:{x:cx*.65,y:cy-CH*.2}},{t:1,mv:[{i:1,x:cx*.88,y:cy-CH*.1}],bl:{x:cx*.88,y:cy-CH*.1}}]},
@@ -727,7 +806,6 @@ function switchTab(t){
   currentTab=t;
   document.querySelectorAll('.s-tab').forEach(el=>el.classList.remove('act'));
   const tab=document.getElementById('stab-'+t);if(tab)tab.classList.add('act');
-  if(t==='chat'){unreadN=0;const b=document.getElementById('chat-badge');if(b)b.style.display='none';}
   buildSheetContent(t);
 }
 window.switchTab=switchTab;
@@ -736,7 +814,7 @@ function buildSheetContent(t){
   const body=document.getElementById('sh-body');if(!body)return;
   if(t==='play'){
     body.innerHTML=`
-      <div class="psec"><div class="psec-title">在線成員</div><div class="online-list" id="online-list-el"></div></div>
+      <div class="psec"><div class="psec-title">在線成員</div><div class="ol" id="online-list-el"></div></div>
       <div class="psec"><div class="psec-title">⚡ 一鍵戰術</div><div class="tc-grid">
         <div class="tc" onclick="loadT('fb');closeSheet()"><span class="tc-em">⚡</span><div class="tc-name">快攻反擊</div></div>
         <div class="tc" onclick="loadT('pr');closeSheet()"><span class="tc-em">🔄</span><div class="tc-name">Pick&Roll</div></div>
@@ -759,9 +837,9 @@ function buildSheetContent(t){
         <div class="tc" onclick="clearAll();closeSheet()" style="border-color:rgba(240,82,82,.2)"><span class="tc-em">🗑</span><div class="tc-name" style="color:#F05252">清除全部</div></div>
         <div class="tc" onclick="undoAct()"><span class="tc-em">↩</span><div class="tc-name">復原</div></div>
       </div></div>`;
-    // Rerender online list
+    // reload online list
     const ol=document.getElementById('online-list-el');
-    if(ol&&window.__users){window.__users.forEach((u,i)=>{const AVC=['#F4732A','#378ADD','#4ADE80','#FACC15','#A78BFA','#F05252'];const r=document.createElement('div');r.className='o-row';const me=u.name===myName?' <span style="color:#F4732A;font-size:8px">（你）</span>':'';r.innerHTML=`<div class="o-av" style="background:${u.color||AVC[i%AVC.length]}">${u.name[0]}</div><span>${u.name}${me}</span><div class="o-dot"></div>`;ol.appendChild(r);});}
+    if(ol&&window.__users){const AVC=['#F4732A','#378ADD','#4ADE80','#FACC15','#A78BFA','#F05252'];window.__users.forEach((u,i)=>{const r=document.createElement('div');r.className='o-row';const me=u.name===myName?' <span style="color:#F4732A;font-size:8px">（你）</span>':'';r.innerHTML=`<div class="o-av" style="background:${u.color||AVC[i%AVC.length]}">${u.name[0]}</div><span>${u.name}${me}</span><div class="o-dot"></div>`;ol.appendChild(r);});}
   }
   else if(t==='team'){
     body.innerHTML=`<div class="psec"><div class="psec-title">球員清單</div><div class="pl" id="player-list-el"></div></div>
@@ -771,7 +849,6 @@ function buildSheetContent(t){
       • <b style="color:#fff">長按</b> 球員開啟改名<br>
       • <b style="color:#fff">右側名稱</b> 點擊直接改名<br>
       • <b style="color:#fff">路線雙擊</b> 加曲線控制點<br>
-      • <b style="color:#fff">拖曳黃點</b> 調整路線弧度<br>
       • <b style="color:#fff">順序工具</b> 點球員→點目標→播放
     </div></div>`;
     render();
@@ -780,24 +857,13 @@ function buildSheetContent(t){
     body.innerHTML=`<div class="psec" style="border:none"><div class="psec-title">📖 戰術符號說明</div><div class="sym-list" id="sym-list-el"></div></div>`;
     buildSymList();
   }
-  else if(t==='chat'){
-    body.innerHTML=`<div class="chat-wrap">
-      <div class="chat-msgs" id="chat-msgs-el" style="flex:1;overflow-y:auto;padding:7px 10px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth"><div class="msg-sys">歡迎使用 HoopBoard Ultra 🏀</div></div>
-      <div class="chat-ia">
-        <div class="stk-strip" id="stk-strip-el"></div>
-        <div class="chat-row"><input class="chat-inp" id="chat-inp-el" placeholder="輸入訊息…" maxlength="100" autocomplete="off"/><button class="chat-send" onclick="sendMsg()">送出</button></div>
-      </div>
-    </div>`;
-    buildStickerStrip();
-    document.getElementById('chat-inp-el').addEventListener('keydown',e=>{if(e.key==='Enter')window.sendMsg();});
-  }
 }
 
 function buildSymList(){
   const list=document.getElementById('sym-list-el');if(!list)return;
   const syms=[
-    {name:'跑位（空手切）',desc:'實線＋箭頭，無球跑動路線',draw:mc=>{mc.strokeStyle='#fff';mc.lineWidth=1.5;mc.beginPath();mc.moveTo(2,10);mc.lineTo(24,10);mc.stroke();mc.fillStyle='#fff';mc.beginPath();mc.moveTo(24,10);mc.lineTo(20,7);mc.lineTo(20,13);mc.closePath();mc.fill();}},
-    {name:'傳球',desc:'虛線＋箭頭，傳球路線',draw:mc=>{mc.strokeStyle='#4ADE80';mc.lineWidth=1.5;mc.setLineDash([3,2]);mc.beginPath();mc.moveTo(2,10);mc.lineTo(24,10);mc.stroke();mc.setLineDash([]);mc.fillStyle='#4ADE80';mc.beginPath();mc.moveTo(24,10);mc.lineTo(20,7);mc.lineTo(20,13);mc.closePath();mc.fill();}},
+    {name:'跑位（空手切）',desc:'實線箭頭，無球跑動路線',draw:mc=>{mc.strokeStyle='#fff';mc.lineWidth=1.5;mc.beginPath();mc.moveTo(2,10);mc.lineTo(24,10);mc.stroke();mc.fillStyle='#fff';mc.beginPath();mc.moveTo(24,10);mc.lineTo(20,7);mc.lineTo(20,13);mc.closePath();mc.fill();}},
+    {name:'傳球',desc:'虛線箭頭，傳球路線',draw:mc=>{mc.strokeStyle='#4ADE80';mc.lineWidth=1.5;mc.setLineDash([3,2]);mc.beginPath();mc.moveTo(2,10);mc.lineTo(24,10);mc.stroke();mc.setLineDash([]);mc.fillStyle='#4ADE80';mc.beginPath();mc.moveTo(24,10);mc.lineTo(20,7);mc.lineTo(20,13);mc.closePath();mc.fill();}},
     {name:'運球（DHO）',desc:'波浪粗線，持球運球路線',draw:mc=>{mc.strokeStyle='#FBBF24';mc.lineWidth=2;mc.beginPath();mc.moveTo(2,10);mc.quadraticCurveTo(7,5,12,10);mc.quadraticCurveTo(17,15,22,10);mc.stroke();mc.fillStyle='#FBBF24';mc.beginPath();mc.moveTo(24,10);mc.lineTo(20,7);mc.lineTo(20,13);mc.closePath();mc.fill();}},
     {name:'掩護 Screen',desc:'方塊符號，站定設置掩護',draw:mc=>{mc.strokeStyle='#60A5FA';mc.lineWidth=1.8;mc.strokeRect(9,5,12,10);}},
     {name:'曲線節點',desc:'雙擊路線加節點，拖曳黃點調弧度',draw:mc=>{mc.strokeStyle='rgba(255,215,0,.6)';mc.lineWidth=1;mc.setLineDash([2,2]);mc.beginPath();mc.moveTo(2,14);mc.lineTo(13,4);mc.lineTo(24,14);mc.stroke();mc.setLineDash([]);mc.fillStyle='#FFD700';mc.beginPath();mc.arc(13,4,3.5,0,Math.PI*2);mc.fill();}},
@@ -806,21 +872,37 @@ function buildSymList(){
   syms.forEach(s=>{
     const item=document.createElement('div');item.className='sym-item';
     const canvas=document.createElement('canvas');canvas.width=28;canvas.height=20;canvas.style.flexShrink='0';canvas.style.borderRadius='3px';
-    const mc=canvas.getContext('2d');s.draw(mc);
+    s.draw(canvas.getContext('2d'));
     const text=document.createElement('div');text.innerHTML=`<div class="sym-nm">${s.name}</div><div class="sym-dc">${s.desc}</div>`;
     item.appendChild(canvas);item.appendChild(text);list.appendChild(item);
   });
 }
 
 function buildStickerStrip(){
-  const strip=document.getElementById('stk-strip-el');if(!strip)return;strip.innerHTML='';
+  const strip=document.getElementById('stk-strip');if(!strip)return;
   ['🏀','🔥','👍','❤️','😂','🎯','⚡','💪','🏆','✅','😤','🙌','💯','⛹️'].forEach(s=>{
-    const btn=document.createElement('button');btn.className='stk-btn';btn.textContent=s;btn.onclick=()=>window.sendStk&&window.sendStk(s);strip.appendChild(btn);
+    const btn=document.createElement('button');btn.className='stk-btn';btn.textContent=s;
+    btn.onclick=()=>window.sendStk&&window.sendStk(s);strip.appendChild(btn);
   });
 }
 
-window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{initCourtDims();render();},100);});
-window.addEventListener('load',()=>{initCourtDims();render();});
+// 手機直式：聊天室改為下方橫向排列
+function adjustChatLayout(){
+  const chatPanel=document.getElementById('chat-panel');
+  const chatSide=chatPanel.querySelector('.chat-side');
+  if(window.innerWidth<=600){
+    // 直式：聊天框橫向（訊息在左，輸入在右）
+    chatPanel.style.flexDirection='row';
+    if(chatSide){chatSide.style.width='160px';chatSide.style.borderLeft='1px solid var(--ln)';chatSide.style.borderTop='none';}
+  } else {
+    // 橫式或桌機：聊天室在右側，垂直排列
+    chatPanel.style.flexDirection='column';
+    if(chatSide){chatSide.style.width='100%';chatSide.style.borderLeft='none';chatSide.style.borderTop='1px solid var(--ln)';}
+  }
+}
+
+window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{initCourtDims();render();adjustChatLayout();},100);});
+window.addEventListener('load',()=>{initCourtDims();adjustChatLayout();render();});
 </script>
 </body>
 </html>
