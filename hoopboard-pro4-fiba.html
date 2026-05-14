@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>HoopBoard Pro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+:root{
+  --bg0:#060E18;--bg1:#0A1520;--bg2:#0F1E2F;--bg3:#162535;--bg4:#1D2F42;
+  --e1:#FF5E1A;--e2:#FF8C42;--e3:#FFB347;--eg:rgba(255,94,26,.35);
+  --a1:#00D4FF;--gn:#00E676;--gn-d:rgba(0,230,118,.15);
+  --yw:#FFD600;--rd:#FF3D5A;--rd-d:rgba(255,61,90,.15);
+  --t1:#FFF;--t2:rgba(255,255,255,.85);--t3:rgba(255,255,255,.55);--t4:rgba(255,255,255,.3);
+  --l1:rgba(255,255,255,.06);--l2:rgba(255,255,255,.1);--l3:rgba(255,255,255,.18);
+  --fd:'Barlow Condensed',sans-serif;--ft:'Noto Sans TC',sans-serif;
+  --hh:52px;--tbh:58px;--pw:270px;--cw:205px;
+  --sb:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg0);font-family:var(--ft);color:var(--t1);touch-action:none;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px;}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh;}
+header{display:flex;align-items:center;gap:10px;padding:0 14px;height:var(--hh);background:var(--bg2);border-bottom:1px solid var(--l1);flex-shrink:0;z-index:30;position:relative;}
+header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--e1),var(--e2),var(--e3),transparent);opacity:.7;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--e1),var(--e3));display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 16px var(--eg);flex-shrink:0;}
+.logo-name{font-family:var(--fd);font-size:17px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(135deg,#fff,rgba(255,255,255,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-name b{background:linear-gradient(135deg,var(--e1),var(--e3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-tag{font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t4);}
+.room-pill{display:flex;align-items:center;gap:7px;padding:5px 12px;background:rgba(255,255,255,.04);border:1px solid var(--l2);border-radius:20px;cursor:pointer;margin-right:auto;}
+.room-pill:hover{background:rgba(255,255,255,.08);}
+.room-code{font-family:var(--fd);font-size:14px;font-weight:700;letter-spacing:3px;color:var(--e2);}
+.room-users{font-size:11px;color:var(--t3);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:lp 2s infinite;}
+@keyframes lp{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,230,118,.4);}50%{opacity:.6;box-shadow:0 0 0 4px rgba(0,230,118,0);}}
+.live-label{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gn);text-transform:uppercase;}
+.h-acts{display:flex;gap:5px;}
+.h-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.04);color:var(--t3);cursor:pointer;font-size:14px;transition:all .2s;flex-shrink:0;}
+.h-btn:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.h-btn.energy{background:linear-gradient(135deg,var(--e1),var(--e2));border-color:transparent;color:#fff;box-shadow:0 0 12px var(--eg);}
+.main{flex:1;display:flex;overflow:hidden;min-height:0;}
+/* COURT */
+.court-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#0D1B2A 0%,var(--bg0) 70%);}
+.court-cw{border-radius:14px;overflow:hidden;position:relative;box-shadow:0 0 60px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.07),0 0 20px var(--eg);}
+canvas{display:block;touch-action:none;}
+canvas.c-sel{cursor:default;}canvas.c-def{cursor:crosshair;}
+/* ★ draw-canvas: 疊在 court 上，預設不攔截事件 */
+#draw-canvas{position:absolute;top:0;left:0;border-radius:14px;pointer-events:none;z-index:5;}
+#draw-canvas.draw-on{pointer-events:all;cursor:crosshair;}
+.ov-pill{position:absolute;background:rgba(10,21,32,.94);backdrop-filter:blur(8px);border:1px solid var(--l2);border-radius:20px;display:flex;align-items:center;gap:6px;padding:5px 13px;font-size:10px;white-space:nowrap;pointer-events:none;}
+.sync-pill{bottom:12px;left:50%;transform:translateX(-50%);color:var(--gn);border-color:rgba(0,230,118,.2);}
+.sync-pill.off{color:var(--rd);border-color:rgba(255,61,90,.2);}
+/* 廣播 pill */
+.bcast-pill{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(10,21,32,.96);backdrop-filter:blur(10px);border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:8px 16px;display:none;align-items:center;gap:10px;white-space:nowrap;z-index:20;box-shadow:0 0 20px rgba(255,215,0,.15);}
+.bcast-pill.show{display:flex;}
+.bcast-prog-wrap{width:100px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.bcast-prog-fill{height:100%;background:linear-gradient(90deg,var(--e1),var(--e3));border-radius:2px;}
+.bcast-label{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--yw);}
+.bcast-frame-info{font-size:10px;color:var(--t3);}
+.bcast-btns{display:flex;gap:5px;}
+.bcast-react{padding:4px 10px;border-radius:6px;border:none;font-size:11px;cursor:pointer;font-family:var(--ft);}
+.bcast-like{background:rgba(0,230,118,.12);color:var(--gn);border:1px solid rgba(0,230,118,.25);}
+.bcast-pause-req{background:rgba(255,94,26,.12);color:var(--e2);border:1px solid rgba(255,94,26,.25);}
+/* 標註工具列 */
+.anno-bar{position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(10,21,32,.96);border:1px solid var(--l2);border-radius:10px;display:none;flex-direction:column;gap:4px;padding:8px 6px;backdrop-filter:blur(10px);z-index:15;}
+.anno-bar.show{display:flex;}
+.anno-btn{width:36px;height:36px;border-radius:7px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.anno-btn:hover{background:rgba(255,255,255,.1);color:var(--t2);}
+.anno-btn.act{background:rgba(255,94,26,.2);color:var(--e2);}
+.anno-sep{height:1px;background:var(--l2);margin:2px 0;}
+.anno-color{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;margin:0 auto;flex-shrink:0;}
+.anno-color.act{border-color:#fff;}
+/* ★ 永遠顯示的畫圖FAB */
+.anno-fab{position:absolute;right:12px;bottom:50px;width:42px;height:42px;border-radius:50%;border:1px solid var(--l2);background:rgba(10,21,32,.92);color:var(--t3);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:15;}
+.anno-fab:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.anno-fab.on{background:rgba(255,94,26,.2);border-color:var(--e1);color:var(--e2);box-shadow:0 0 10px var(--eg);}
+/* 播放控制條 */
+.anim-bar{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);background:rgba(10,21,32,.96);border:1px solid var(--l2);border-radius:12px;padding:7px 14px;display:none;align-items:center;gap:9px;backdrop-filter:blur(10px);z-index:10;}
+.anim-bar.show{display:flex;}
+.ap-prog{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--e2);min-width:36px;}
+.ap-play{padding:5px 13px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);box-shadow:0 0 8px var(--eg);}
+.ap-stop{padding:5px 10px;border-radius:7px;border:1px solid var(--l2);background:rgba(255,255,255,.06);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--ft);}
+.spd-g{display:flex;gap:3px;}
+.spd-b{padding:3px 7px;border-radius:5px;border:1px solid var(--l2);background:rgba(255,255,255,.05);color:var(--t4);font-size:9px;cursor:pointer;font-weight:600;}
+.spd-b.act{background:var(--eg);color:var(--e2);border-color:rgba(255,94,26,.4);}
+.ap-track{height:3px;width:80px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.ap-fill{height:100%;background:linear-gradient(90deg,var(--e1),var(--e3));border-radius:2px;transition:width .1s;}
+/* 球員名稱 prompt */
+.npw{display:none;position:absolute;z-index:60;background:var(--bg3);border:1px solid var(--l2);border-radius:10px;padding:13px;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+.npw-lbl{font-size:10px;color:var(--t3);margin-bottom:8px;display:block;font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-family:var(--fd);}
+.npw-row{display:flex;gap:6px;margin-bottom:8px;}
+.npw-inp{flex:1;padding:7px 9px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid var(--l2);color:var(--t1);font-size:13px;font-family:var(--ft);outline:none;}
+.npw-inp:focus{border-color:var(--e1);}
+.npw-num{width:50px;text-align:center;}
+.npw-btns{display:flex;gap:6px;}
+.npw-ok{flex:1;padding:8px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--ft);}
+.npw-skip{flex:1;padding:8px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.05);color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--ft);}
+/* RIGHT PANEL */
+.right-panel{width:var(--pw);flex-shrink:0;background:var(--bg2);border-left:1px solid var(--l1);display:flex;flex-direction:column;overflow:hidden;}
+.rp-tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--l1);flex-shrink:0;}
+.rp-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.rp-tab:hover{color:var(--t2);}
+.rp-tab.act{color:var(--e2);border-bottom-color:var(--e1);}
+.rp-body{flex:1;overflow-y:auto;overflow-x:hidden;}
+.anim-ctl{padding:12px;background:var(--bg1);border-bottom:1px solid var(--l1);flex-shrink:0;}
+.ctl-ttl{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t4);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ctl-ttl::before{content:'';width:12px;height:2px;background:linear-gradient(90deg,var(--e1),var(--e2));border-radius:1px;}
+.ctl-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.ctl-play{padding:7px 14px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);flex:1;box-shadow:0 0 10px var(--eg);}
+.ctl-stop{padding:7px 10px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.05);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--ft);}
+.ctl-add{padding:7px 10px;border-radius:6px;border:1px solid rgba(0,230,118,.25);background:var(--gn-d);color:var(--gn);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);}
+.ctl-prog{font-family:var(--fd);font-size:13px;font-weight:900;color:var(--e2);min-width:38px;text-align:right;}
+.ctl-track{height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:4px;}
+.ctl-fill{height:100%;background:linear-gradient(90deg,var(--e1),var(--e3));border-radius:2px;width:0%;}
+.bcast-ctl{padding:10px 12px;background:rgba(0,212,255,.04);border-bottom:1px solid rgba(0,212,255,.1);flex-shrink:0;}
+.bcast-ctl-title{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--a1);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.bcast-ctl-title::before{content:'';width:10px;height:2px;background:var(--a1);border-radius:1px;}
+.bcast-main-btn{width:100%;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--ft);transition:all .2s;margin-bottom:6px;}
+.bcast-main-btn.idle{background:linear-gradient(135deg,var(--a1),#0099BB);color:#000;}
+.bcast-main-btn.live{background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;box-shadow:0 0 14px var(--eg);}
+.bcast-desc{font-size:9px;color:var(--t4);line-height:1.6;}
+.frame-list{flex:1;overflow-y:auto;padding:8px;}
+.fi{border-radius:10px;border:1px solid var(--l1);background:var(--bg3);margin-bottom:6px;cursor:pointer;transition:all .2s;overflow:hidden;position:relative;user-select:none;}
+.fi:hover{border-color:var(--l3);background:var(--bg4);}
+.fi.act{border-color:var(--e1);background:linear-gradient(135deg,rgba(255,94,26,.12),rgba(255,140,66,.06));box-shadow:0 0 12px rgba(255,94,26,.2);}
+.fi.act::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--e1),var(--e3));border-radius:3px 0 0 3px;}
+.fi.dragging{opacity:.35;border-style:dashed;}
+.fi.drag-over{border-color:var(--a1);background:rgba(0,212,255,.06);}
+.fi-hdr{display:flex;align-items:center;gap:6px;padding:7px 10px;}
+.fi-drag{font-size:13px;color:var(--t4);cursor:grab;flex-shrink:0;}
+.fi-num{font-family:var(--fd);font-size:13px;font-weight:900;width:20px;color:var(--e2);flex-shrink:0;}
+.fi-name{flex:1;font-size:10px;font-weight:500;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text;}
+.fi-name-inp{display:none;flex:1;background:transparent;border:none;border-bottom:1px solid var(--e1);color:var(--t1);font-size:10px;font-family:var(--ft);outline:none;padding:0;}
+.fi-acts{display:flex;gap:2px;flex-shrink:0;}
+.fa-btn{width:22px;height:22px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;border-radius:5px;}
+.fa-btn:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.fa-btn.del:hover{background:var(--rd-d);color:var(--rd);}
+.fi-prev{padding:0 8px 8px;}
+.fi-canvas{border-radius:6px;display:block;width:100%;background:#07111B;}
+.tp-body{padding:12px;}
+.tp-sec{margin-bottom:16px;}
+.tp-ttl{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t4);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.tp-ttl::before{content:'';width:10px;height:2px;background:linear-gradient(90deg,var(--e1),var(--e2));border-radius:1px;}
+.c-swatches{display:flex;gap:6px;flex-wrap:wrap;}
+.c-sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.c-sw:hover{transform:scale(1.15);}
+.c-sw.act{border-color:#fff;transform:scale(1.1);}
+.sz-row{display:flex;align-items:center;gap:10px;}
+.sz-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;cursor:pointer;}
+.sz-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--e1),var(--e2));cursor:pointer;}
+.sz-val{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--e2);min-width:22px;}
+.tc-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.tc-card{padding:9px 6px;border-radius:10px;background:var(--bg3);border:1px solid var(--l1);cursor:pointer;text-align:center;transition:all .2s;}
+.tc-card:hover{border-color:rgba(255,94,26,.4);background:rgba(255,94,26,.08);}
+.tc-card:active{transform:scale(.97);}
+.tc-icon{font-size:18px;display:block;margin-bottom:3px;}
+.tc-label{font-size:9px;color:var(--t3);font-weight:600;line-height:1.3;}
+.tc-label.danger{color:var(--rd);}
+/* CHAT */
+.chat-panel{width:var(--cw);flex-shrink:0;background:var(--bg2);border-left:1px solid var(--l1);display:flex;flex-direction:column;}
+.chat-hdr{padding:9px 12px;border-bottom:1px solid var(--l1);flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.chat-title{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);flex:1;display:flex;align-items:center;gap:5px;}
+.chat-title::before{content:'';width:10px;height:2px;background:var(--a1);border-radius:1px;}
+.chat-unread{background:var(--e1);color:#fff;border-radius:8px;padding:0 5px;font-size:8px;font-weight:700;display:none;}
+.chat-msgs{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth;}
+.msg{display:flex;flex-direction:column;gap:1px;}
+.msg-top{display:flex;align-items:center;gap:4px;}
+.msg-av{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
+.msg-who{font-size:9px;font-weight:700;color:var(--e2);}
+.msg-who.me{color:var(--gn);}
+.msg-when{font-size:8px;color:var(--t4);}
+.msg-body{font-size:10px;padding:4px 8px;line-height:1.4;word-break:break-all;background:rgba(255,255,255,.05);border-radius:0 7px 7px 7px;margin-left:17px;}
+.msg-body.mine{background:rgba(255,94,26,.12);border:1px solid rgba(255,94,26,.15);border-radius:7px 0 7px 7px;}
+.msg-stk{font-size:22px;margin-left:17px;}
+.msg-sys{font-size:9px;color:var(--t4);text-align:center;font-style:italic;padding:2px 0;}
+.msg-react{font-size:10px;text-align:center;padding:3px 0;color:var(--yw);}
+.msg-pause{font-size:10px;text-align:center;padding:3px 0;color:var(--e2);}
+.msg-likes{margin-left:17px;display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;}
+.like-btn{font-size:9px;padding:1px 5px;border-radius:7px;border:1px solid var(--l1);background:rgba(255,255,255,.04);cursor:pointer;color:var(--t4);}
+.like-btn:hover,.like-btn.liked{background:rgba(255,94,26,.12);border-color:rgba(255,94,26,.3);color:var(--e2);}
+.chat-ia{flex-shrink:0;border-top:1px solid var(--l1);}
+.stk-strip{display:flex;gap:2px;padding:4px 8px;overflow-x:auto;}
+.stk-strip::-webkit-scrollbar{display:none;}
+.stk-btn{font-size:16px;cursor:pointer;padding:2px;border:none;background:transparent;flex-shrink:0;}
+.chat-row{display:flex;gap:5px;padding:5px 8px;}
+.chat-inp{flex:1;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--l2);color:var(--t1);font-size:11px;font-family:var(--ft);outline:none;min-width:0;}
+.chat-inp:focus{border-color:var(--e1);}
+.chat-send{padding:7px 10px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);flex-shrink:0;}
+/* TOOLBAR */
+.btb{display:flex;align-items:center;height:var(--tbh);flex-shrink:0;background:var(--bg2);border-top:1px solid var(--l1);padding:0 6px;gap:2px;overflow-x:auto;scrollbar-width:none;padding-bottom:var(--sb);min-height:calc(var(--tbh) + var(--sb));}
+.btb::-webkit-scrollbar{display:none;}
+.tb-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:50px;height:48px;border-radius:6px;border:none;background:transparent;color:var(--t4);cursor:pointer;gap:3px;flex-shrink:0;transition:all .15s;}
+.tb-btn svg{width:18px;height:18px;}
+.tb-btn span{font-size:8px;font-weight:600;white-space:nowrap;font-family:var(--fd);}
+.tb-btn:hover{background:rgba(255,255,255,.07);color:var(--t2);}
+.tb-btn.act{background:rgba(255,94,26,.12);color:var(--e2);border:1px solid rgba(255,94,26,.25);}
+.tb-sep{width:1px;height:32px;flex-shrink:0;margin:0 3px;background:linear-gradient(180deg,transparent,var(--l2),transparent);}
+@media(max-width:600px){
+  .right-panel{display:none;}
+  .chat-panel{width:100%;height:160px;border-left:none;border-top:1px solid var(--l1);flex-direction:row;}
+  .chat-msgs-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .chat-inp-wrap{width:150px;flex-shrink:0;border-left:1px solid var(--l1);display:flex;flex-direction:column;}
+  .main{flex-direction:column;}
+  .stk-strip{display:none;}
+}
+@media(min-width:601px){.chat-msgs-wrap{display:contents;}.chat-inp-wrap{display:contents;}}
+/* SETUP */
+.su-ov{position:fixed;inset:0;background:var(--bg0);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;background-image:radial-gradient(ellipse at 30% 20%,rgba(255,94,26,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(0,212,255,.05) 0%,transparent 50%);}
+.su-box{background:var(--bg2);border:1px solid var(--l2);border-radius:20px;padding:28px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;overflow:hidden;}
+.su-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--e1),var(--e2),var(--e3));}
+.su-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.su-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--e1),var(--e3));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px var(--eg);}
+.su-title{font-family:var(--fd);font-size:26px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}
+.su-title span{color:var(--e2);}
+.su-sub{font-size:8px;color:var(--t4);letter-spacing:3px;text-transform:uppercase;font-family:var(--fd);}
+.su-desc{font-size:11px;color:var(--t3);margin:16px 0 14px;line-height:1.8;}
+.su-desc b{color:var(--t1);}
+.s-inp{width:100%;padding:11px 13px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--l2);color:var(--t1);font-size:14px;margin-bottom:10px;font-family:var(--ft);outline:none;}
+.s-inp:focus{border-color:var(--e1);}
+.s-row{display:flex;gap:8px;margin-bottom:10px;}
+.s-btn{flex:1;padding:12px;border-radius:6px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--ft);}
+.s-pri{background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;box-shadow:0 0 14px var(--eg);}
+.s-sec{background:rgba(255,255,255,.06);color:var(--t2);border:1px solid var(--l2);}
+.s-note{font-size:10px;color:var(--t4);line-height:1.8;background:rgba(255,255,255,.03);border-radius:6px;padding:10px 12px;border:1px solid var(--l1);}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-ov.show{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--l2);border-radius:14px;padding:22px;width:100%;max-width:320px;position:relative;overflow:hidden;}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a1),var(--e1));}
+.modal-title{font-family:var(--fd);font-size:20px;font-weight:900;letter-spacing:1px;margin-bottom:4px;}
+.modal-sub{font-size:11px;color:var(--t3);margin-bottom:14px;}
+.m-link-row{display:flex;gap:6px;margin-bottom:11px;}
+.m-link-inp{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--l2);border-radius:6px;padding:7px 10px;color:var(--t2);font-size:10px;font-family:monospace;}
+.m-copy{padding:7px 12px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;}
+.m-share-row{display:flex;gap:6px;margin-bottom:12px;}
+.m-share-opt{flex:1;padding:9px 6px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.04);color:var(--t2);font-size:10px;cursor:pointer;text-align:center;}
+.m-share-opt:hover{border-color:rgba(255,94,26,.4);}
+.m-share-opt span{display:block;font-size:18px;margin-bottom:3px;}
+.m-close{width:100%;padding:8px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--l2);color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--ft);}
+</style>
+</head>
+<body>
+
+<div class="su-ov" id="su-ov">
+  <div class="su-box">
+    <div class="su-logo">
+      <div class="su-icon">🏀</div>
+      <div><div class="su-title">HOOP<span>BOARD</span></div><div class="su-sub">Pro Tactics Editor</div></div>
+    </div>
+    <p class="su-desc">選擇你的身份：<br>• <b>建立新房間</b> — 產生連結分享給隊友<br>• <b>加入房間</b> — 輸入教練的代碼</p>
+    <input class="s-inp" id="su-n" placeholder="你的名稱（例：教練、彥）" maxlength="10" autocomplete="off"/>
+    <div class="s-row">
+      <button class="s-btn s-pri" onclick="createRoom()">🆕 建立房間</button>
+      <button class="s-btn s-sec" onclick="showJoin()">🔗 加入</button>
+    </div>
+    <div id="join-area" style="display:none;margin-bottom:10px">
+      <input class="s-inp" id="su-c" placeholder="房間代碼（例：ATK-7X2）" maxlength="10" style="text-transform:uppercase;margin-bottom:8px" autocomplete="off"/>
+      <button class="s-btn s-pri" onclick="joinRoom()" style="width:100%">✅ 加入房間</button>
+    </div>
+    <div class="s-note">🔒 Firebase 即時同步<br><span id="fb-st" style="color:var(--e2)">⏳ 連線中...</span></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏀</div>
+    <div style="display:flex;flex-direction:column;line-height:1">
+      <div class="logo-name">HOOP<b>BOARD</b></div>
+      <div class="logo-tag">Pro Tactics</div>
+    </div>
+  </div>
+  <div class="room-pill" onclick="document.getElementById('share-modal').classList.add('show')">
+    <div style="display:flex;align-items:center;gap:4px"><div class="live-dot"></div><span class="live-label">Live</span></div>
+    <span class="room-code" id="rc">------</span>
+    <span class="room-users" id="on-n">0人</span>
+  </div>
+  <div class="h-acts">
+    <button class="h-btn" onclick="undoAct()">↩</button>
+    <button class="h-btn" onclick="exportImg()">📸</button>
+    <button class="h-btn" onclick="document.getElementById('share-modal').classList.add('show')">🔗</button>
+    <button class="h-btn energy" onclick="saveTactic()">💾</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="court-wrap" id="ca">
+    <div class="court-cw" id="court-cw-el">
+      <canvas id="court" class="c-def"></canvas>
+      <!-- draw-canvas 疊在 court 正上方，預設不攔截事件 -->
+      <canvas id="draw-canvas"></canvas>
+    </div>
+    <!-- 廣播 pill（全體可見） -->
+    <div class="bcast-pill" id="bcast-pill">
+      <span class="bcast-label" id="bcast-label">▶ 播放中</span>
+      <div class="bcast-prog-wrap"><div class="bcast-prog-fill" id="bcast-fill" style="width:0%"></div></div>
+      <span class="bcast-frame-info" id="bcast-frame-info"></span>
+      <div class="bcast-btns">
+        <button class="bcast-react bcast-like" onclick="sendReaction('👍')">👍 讚</button>
+        <button class="bcast-react bcast-pause-req" onclick="sendPauseRequest()">✋ 暫停</button>
+      </div>
+    </div>
+    <!-- 標註工具列（畫圖模式時） -->
+    <div class="anno-bar" id="anno-bar">
+      <button class="anno-btn act" id="anno-pen-btn" onclick="setAnnoTool('pen',this)" title="畫筆">✏️</button>
+      <button class="anno-btn" id="anno-arr-btn" onclick="setAnnoTool('arrow',this)" title="箭頭">→</button>
+      <button class="anno-btn" onclick="clearAnno()" title="清除">🗑</button>
+      <div class="anno-sep"></div>
+      <div id="anno-colors"></div>
+    </div>
+    <!-- ★ 永遠顯示的畫圖開關 FAB -->
+    <button class="anno-fab" id="anno-fab" onclick="toggleAnno()" title="開啟/關閉畫圖討論">✏️</button>
+    <!-- 播放控制條（主持人） -->
+    <div class="anim-bar" id="anim-bar">
+      <span style="font-size:10px;color:var(--t3)">動畫</span>
+      <div class="ap-track"><div class="ap-fill" id="ap-fill"></div></div>
+      <span class="ap-prog" id="ap-prog">0%</span>
+      <div class="spd-g">
+        <button class="spd-b" onclick="setSpd(.5,this)">.5x</button>
+        <button class="spd-b act" onclick="setSpd(1,this)">1x</button>
+        <button class="spd-b" onclick="setSpd(2,this)">2x</button>
+      </div>
+      <button class="ap-play" id="ap-pb" onclick="toggleAnim()">▶ 播放</button>
+      <button class="ap-stop" onclick="stopAnim()">■ 停止</button>
+    </div>
+    <div class="ov-pill sync-pill" id="sync-pill"><div class="live-dot"></div><span id="sync-txt">連線中...</span></div>
+    <div class="npw" id="npw">
+      <span class="npw-lbl">球員資訊</span>
+      <div class="npw-row">
+        <input class="npw-inp" id="np-n" placeholder="名稱" maxlength="6" autocomplete="off"/>
+        <input class="npw-inp npw-num" id="np-num" placeholder="#" type="number" min="1" max="99"/>
+      </div>
+      <div class="npw-btns">
+        <button class="npw-skip" onclick="cancelNP()">略過</button>
+        <button class="npw-ok" onclick="confirmNP()">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="rp-tabs">
+      <div class="rp-tab act" id="rt-frames" onclick="switchRP('frames')">🎬 幀動畫</div>
+      <div class="rp-tab" id="rt-tools" onclick="switchRP('tools')">⚙️ 工具</div>
+    </div>
+    <div class="rp-body" id="rp-body"></div>
+  </div>
+
+  <div class="chat-panel">
+    <div class="chat-msgs-wrap" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="chat-hdr"><div class="chat-title">聊天室</div><span class="chat-unread" id="chat-unread">0</span></div>
+      <div class="chat-msgs" id="chat-msgs"><div class="msg-sys">歡迎使用 HoopBoard Pro 🏀</div></div>
+    </div>
+    <div class="chat-inp-wrap" style="flex-shrink:0;border-top:1px solid var(--l1);">
+      <div class="chat-ia">
+        <div class="stk-strip" id="stk-strip"></div>
+        <div class="chat-row">
+          <input class="chat-inp" id="chat-inp" placeholder="訊息…" maxlength="100" autocomplete="off"/>
+          <button class="chat-send" onclick="sendMsg()">送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="btb">
+  <button class="tb-btn act" id="tb-sel" onclick="setTool('select',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-4 7z"/></svg><span>選取</span>
+  </button>
+  <button class="tb-btn" id="tb-ply" onclick="setTool('player',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20c0-4 2.7-7 6-7s6 3 6 7"/></svg><span>球員</span>
+  </button>
+  <button class="tb-btn" id="tb-bal" onclick="setTool('ball',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a9 9 0 0 0 0 18M12 3a9 9 0 0 1 0 18"/></svg><span>球</span>
+  </button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="tb-cut" onclick="setTool('cut',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M14 7l5 5-5 5"/></svg><span>跑位</span>
+  </button>
+  <button class="tb-btn" id="tb-pass" onclick="setTool('pass',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"><path d="M5 12h14M14 7l5 5-5 5"/></svg><span>傳球</span>
+  </button>
+  <button class="tb-btn" id="tb-drib" onclick="setTool('drib',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12 Q8 6 12 12 Q16 18 20 12"/></svg><span>運球</span>
+  </button>
+  <button class="tb-btn" id="tb-scr" onclick="setTool('screen',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="7" width="6" height="10" rx="1"/><path d="M5 12h4M15 12h4"/></svg><span>掩護</span>
+  </button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="delSel()" style="color:var(--rd)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg><span>刪除</span>
+  </button>
+  <button class="tb-btn" onclick="addFrame()" style="color:var(--gn)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>新幀</span>
+  </button>
+</div>
+</div>
+
+<div class="modal-ov" id="share-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal-box">
+    <div class="modal-title">🔗 分享戰術板</div>
+    <div class="modal-sub">傳連結給球員，進入後即時同步</div>
+    <div class="m-link-row"><input class="m-link-inp" id="share-link" readonly/><button class="m-copy" onclick="copyLink()">複製</button></div>
+    <div class="m-share-row">
+      <button class="m-share-opt" onclick="shareLine()"><span>💬</span>LINE</button>
+      <button class="m-share-opt" onclick="copyLink()"><span>📋</span>複製</button>
+    </div>
+    <button class="m-close" onclick="document.getElementById('share-modal').classList.remove('show')">關閉</button>
+  </div>
+</div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getDatabase,ref,set,push,onValue,onChildAdded,onDisconnect,serverTimestamp,query,limitToLast,get,remove}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+const FC={apiKey:"AIzaSyAd5oCNcMUiY3G1tV8djs03Ig83DeRKrqk",authDomain:"basketball-tactics.firebaseapp.com",databaseURL:"https://basketball-tactics-default-rtdb.firebaseio.com",projectId:"basketball-tactics",storageBucket:"basketball-tactics.firebasestorage.app",messagingSenderId:"342499390591",appId:"1:342499390591:web:055c4443ca8400283efb4a"};
+const AVC=['#FF5E1A','#2979FF','#00C853','#FFD600','#AA00FF','#FF1744','#00BCD4'];
+let db,roomId,myName,myId,remoteUpd=false,unreadN=0;
+window.__isHost=false;
+try{const app=initializeApp(FC);db=getDatabase(app);document.getElementById('fb-st').textContent='✅ Firebase 連線成功';document.getElementById('fb-st').style.color='var(--gn)';}
+catch(e){document.getElementById('fb-st').textContent='❌ '+e.message;document.getElementById('fb-st').style.color='var(--rd)';}
+function genId(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<3;i++)s+=c[~~(Math.random()*c.length)];s+='-';for(let i=0;i<3;i++)s+=c[~~(Math.random()*c.length)];return s;}
+window.createRoom=()=>{const n=document.getElementById('su-n').value.trim();if(!n){alert('請輸入名稱！');return;}roomId=genId();myName=n;myId=Date.now().toString(36)+Math.random().toString(36).slice(2,5);window.__isHost=true;go();};
+window.showJoin=()=>document.getElementById('join-area').style.display='block';
+window.joinRoom=()=>{const n=document.getElementById('su-n').value.trim(),c=document.getElementById('su-c').value.trim().toUpperCase();if(!n||!c){alert('請輸入名稱和代碼！');return;}roomId=c;myName=n;myId=Date.now().toString(36)+Math.random().toString(36).slice(2,5);window.__isHost=false;go();};
+const urlRoom=new URLSearchParams(location.search).get('room');
+if(urlRoom){document.getElementById('su-c').value=urlRoom;document.getElementById('join-area').style.display='block';}
+function go(){
+  document.getElementById('su-ov').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('rc').textContent=roomId;
+  document.getElementById('share-link').value=location.origin+location.pathname+'?room='+roomId;
+  initCourtDims();initUI();buildStickers();render();
+  if(!db){document.getElementById('sync-txt').textContent='⚠️ 單機模式';document.getElementById('sync-pill').classList.add('off');return;}
+  const myColor=AVC[~~(Math.random()*AVC.length)];
+  const presRef=ref(db,'rooms/'+roomId+'/presence/'+myId);
+  set(presRef,{name:myName,color:myColor,isHost:window.__isHost,ts:serverTimestamp()});
+  onDisconnect(presRef).remove();
+  onValue(ref(db,'rooms/'+roomId+'/presence'),snap=>{const users=Object.values(snap.val()||{});document.getElementById('on-n').textContent=users.length+'人';window.__users=users;});
+  onValue(ref(db,'rooms/'+roomId+'/state'),snap=>{const d=snap.val();if(!d)return;remoteUpd=true;if(Array.isArray(d.frames))frames=d.frames;curFrame=Math.min(curFrame,frames.length-1);remoteUpd=false;render();renderFrameList();});
+  onValue(ref(db,'rooms/'+roomId+'/broadcast'),snap=>{const d=snap.val();if(!d){hideBcast();return;}handleBcast(d);});
+  onValue(ref(db,'rooms/'+roomId+'/anno'),snap=>{const d=snap.val();if(!d||!d.strokes){clearDC();return;}redrawAnno(d.strokes);});
+  let fl=true;
+  onChildAdded(query(ref(db,'rooms/'+roomId+'/chat'),limitToLast(80)),snap=>{const m=snap.val();if(!m)return;appendMsg(m,snap.key,fl);if(fl)return;if(m.uid!==myId){unreadN++;const b=document.getElementById('chat-unread');if(b){b.textContent=unreadN;b.style.display='inline-block';}}});
+  setTimeout(()=>fl=false,1500);
+  document.getElementById('chat-inp').addEventListener('focus',()=>{unreadN=0;const b=document.getElementById('chat-unread');if(b)b.style.display='none';});
+  onValue(ref(db,'rooms/'+roomId+'/likes'),snap=>{const data=snap.val()||{};document.querySelectorAll('.like-btn').forEach(btn=>{const mk=btn.dataset.mk,em=btn.dataset.em;if(!mk||!em)return;const cnt=data[mk]?data[mk][em]?Object.keys(data[mk][em]).length:0:0;btn.textContent=em+(cnt>0?' '+cnt:'');btn.classList.toggle('liked',!!(data[mk]&&data[mk][em]&&data[mk][em][myId]));});});
+  document.getElementById('sync-txt').textContent='即時同步中';
+  sysMsg(myName+' 加入了房間 🏀');
+}
+// BROADCAST
+window.__bcastOn=false;
+window.startBcast=()=>{if(!db||!window.__isHost)return;window.__bcastOn=true;document.getElementById('bcast-main-btn').className='bcast-main-btn live';document.getElementById('bcast-main-btn').textContent='📡 廣播中（點擊結束）';set(ref(db,'rooms/'+roomId+'/broadcast'),{on:true,animT:0,playing:false,frameCount:frames.length,hostId:myId,startedAt:Date.now()});document.getElementById('anim-bar').classList.add('show');sysMsg(myName+' 開始廣播 📡');};
+window.stopBcast=()=>{if(!db||!window.__isHost)return;window.__bcastOn=false;set(ref(db,'rooms/'+roomId+'/broadcast'),null);set(ref(db,'rooms/'+roomId+'/anno'),null);document.getElementById('bcast-main-btn').className='bcast-main-btn idle';document.getElementById('bcast-main-btn').textContent='📡 開始廣播（同步播放）';document.getElementById('anim-bar').classList.remove('show');hideBcast();clearDC();sysMsg(myName+' 結束廣播');};
+window.toggleBcast=()=>{if(window.__bcastOn)window.stopBcast();else window.startBcast();};
+window.__pushBcast=(t,playing)=>{if(!db||!window.__isHost||!window.__bcastOn)return;set(ref(db,'rooms/'+roomId+'/broadcast'),{on:true,animT:t,playing,frameCount:frames.length,hostId:myId,curFrame});};
+function handleBcast(d){if(!d||!d.on){hideBcast();return;}showBcast();const prog=Math.round((d.animT||0)*100);document.getElementById('bcast-fill').style.width=prog+'%';const fi=Math.min(Math.floor((d.animT||0)*(d.frameCount-1)),d.frameCount-2);document.getElementById('bcast-frame-info').textContent='幀'+(fi+1)+'/'+d.frameCount;document.getElementById('bcast-label').textContent=d.playing?'▶ 播放中':'⏸ 暫停中';if(!window.__isHost&&d.playing)renderBcastFrame(d.animT||0,d.frameCount);}
+function renderBcastFrame(t,fc){const total=Math.min(fc,frames.length);if(total<2)return;const p=t*(total-1),fi=Math.min(Math.floor(p),total-2),frac=p-fi;const f0=frames[fi],f1=frames[fi+1];if(!f0||!f1)return;const maxP=Math.max(f0.players.length,f1.players.length);const intP=[];for(let i=0;i<maxP;i++){const p0=f0.players[i],p1=f1.players[i];if(p0&&p1)intP.push({...p0,x:lerp(p0.x,p1.x,frac),y:lerp(p0.y,p1.y,frac)});else if(p0)intP.push({...p0});else if(p1)intP.push({...p1});}const intBall=f0.ball&&f1.ball?{...f0.ball,x:lerp(f0.ball.x,f1.ball.x,frac),y:lerp(f0.ball.y,f1.ball.y,frac)}:f0.ball;drawCourt();renderFrameData({...f0,players:intP,ball:intBall});}
+function showBcast(){document.getElementById('bcast-pill').classList.add('show');}
+function hideBcast(){document.getElementById('bcast-pill').classList.remove('show');}
+window.sendReaction=(e)=>{if(!db)return;push(ref(db,'rooms/'+roomId+'/chat'),{uid:myId,name:myName,text:e+' '+myName,type:'react',ts:Date.now()});};
+window.sendPauseRequest=()=>{if(!db)return;push(ref(db,'rooms/'+roomId+'/chat'),{uid:myId,name:myName,text:'✋ '+myName+' 要求暫停',type:'pause',ts:Date.now()});};
+// ANNOTATION
+let annoStrokes=[],annoDrawing=false,annoCurPts=[];
+let annoColor='#FF5E1A',annoTool='pen',annoOn=false;
+// ★★★ toggleAnno: 任何時候都可呼叫，與 animPlaying 完全無關
+window.toggleAnno=()=>{
+  annoOn=!annoOn;
+  const fab=document.getElementById('anno-fab'),dc=document.getElementById('draw-canvas'),bar=document.getElementById('anno-bar');
+  if(annoOn){fab.classList.add('on');fab.title='關閉畫圖（再按一次）';dc.classList.add('draw-on');bar.classList.add('show');}
+  else{fab.classList.remove('on');fab.title='開啟畫圖討論';dc.classList.remove('draw-on');bar.classList.remove('show');}
+};
+window.setAnnoTool=(t,btn)=>{annoTool=t;document.querySelectorAll('.anno-btn').forEach(b=>b.classList.remove('act'));btn.classList.add('act');};
+window.clearAnno=()=>{annoStrokes=[];clearDC();if(db)set(ref(db,'rooms/'+roomId+'/anno'),{strokes:[]});};
+function pushAnno(){if(!db||!window.__isHost)return;set(ref(db,'rooms/'+roomId+'/anno'),{strokes:annoStrokes,ts:Date.now()});}
+function clearDC(){const dc=document.getElementById('draw-canvas');dc.getContext('2d').clearRect(0,0,dc.width,dc.height);}
+function redrawAnno(strokes){const dc=document.getElementById('draw-canvas');const ctx=dc.getContext('2d');ctx.clearRect(0,0,dc.width,dc.height);(strokes||[]).forEach(s=>{if(!s.pts||s.pts.length<2)return;ctx.save();ctx.strokeStyle=s.color||'#FF5E1A';ctx.lineWidth=s.width||3;ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor=s.color;ctx.shadowBlur=4;ctx.beginPath();ctx.moveTo(s.pts[0].x,s.pts[0].y);for(let i=1;i<s.pts.length;i++)ctx.lineTo(s.pts[i].x,s.pts[i].y);ctx.stroke();if(s.arrow&&s.pts.length>=2){const n=s.pts.length,ex=s.pts[n-1].x,ey=s.pts[n-1].y,px=s.pts[n-2].x,py=s.pts[n-2].y;const ang=Math.atan2(ey-py,ex-px),h=14;ctx.fillStyle=s.color;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-h*Math.cos(ang-.42),ey-h*Math.sin(ang-.42));ctx.lineTo(ex-h*Math.cos(ang+.42),ey-h*Math.sin(ang+.42));ctx.closePath();ctx.fill();}ctx.restore();});}
+const DC=document.getElementById('draw-canvas');
+function getDCPos(e){const r=DC.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;return{x:(cx-r.left)*(DC.width/r.width),y:(cy-r.top)*(DC.height/r.height)};}
+DC.addEventListener('mousedown',e=>{if(!annoOn)return;annoDrawing=true;const pos=getDCPos(e);annoCurPts=[{x:pos.x,y:pos.y}];});
+DC.addEventListener('mousemove',e=>{if(!annoDrawing||!annoOn)return;const pos=getDCPos(e);annoCurPts.push({x:pos.x,y:pos.y});redrawAnno([...annoStrokes,{color:annoColor,width:3,pts:annoCurPts,arrow:annoTool==='arrow'}]);});
+DC.addEventListener('mouseup',e=>{if(!annoDrawing||!annoOn)return;annoDrawing=false;if(annoCurPts.length>1){annoStrokes.push({color:annoColor,width:3,pts:[...annoCurPts],arrow:annoTool==='arrow'});pushAnno();}annoCurPts=[];});
+DC.addEventListener('touchstart',e=>{e.preventDefault();if(!annoOn)return;annoDrawing=true;const pos=getDCPos(e);annoCurPts=[{x:pos.x,y:pos.y}];},{passive:false});
+DC.addEventListener('touchmove',e=>{e.preventDefault();if(!annoDrawing||!annoOn)return;const pos=getDCPos(e);annoCurPts.push({x:pos.x,y:pos.y});redrawAnno([...annoStrokes,{color:annoColor,width:3,pts:annoCurPts,arrow:annoTool==='arrow'}]);},{passive:false});
+DC.addEventListener('touchend',e=>{e.preventDefault();if(!annoDrawing||!annoOn)return;annoDrawing=false;if(annoCurPts.length>1){annoStrokes.push({color:annoColor,width:3,pts:[...annoCurPts],arrow:annoTool==='arrow'});pushAnno();}annoCurPts=[];},{passive:false});
+// CHAT
+window.sendMsg=()=>{const inp=document.getElementById('chat-inp'),t=inp.value.trim();if(!t||!db)return;inp.value='';push(ref(db,'rooms/'+roomId+'/chat'),{uid:myId,name:myName,text:t,type:'text',ts:Date.now()});};
+window.sendStk=s=>{if(!db)return;push(ref(db,'rooms/'+roomId+'/chat'),{uid:myId,name:myName,text:s,type:'stk',ts:Date.now()});};
+window.toggleLike=(mk,em)=>{if(!db)return;const lr=ref(db,'rooms/'+roomId+'/likes/'+mk+'/'+em+'/'+myId);get(lr).then(s=>{s.exists()?remove(lr):set(lr,true);});};
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('chat-inp')===document.activeElement)window.sendMsg();});
+function sysMsg(t){if(!db)return;push(ref(db,'rooms/'+roomId+'/chat'),{uid:'__sys__',text:t,type:'sys',ts:Date.now()});}
+const AVC2=['#FF5E1A','#2979FF','#00C853','#FFD600','#AA00FF','#FF1744','#00BCD4'];
+function appendMsg(m,key,silent){const box=document.getElementById('chat-msgs');if(!box)return;const el=document.createElement('div');if(m.type==='sys'||m.uid==='__sys__'){el.className='msg-sys';el.textContent=m.text;}else if(m.type==='react'){el.className='msg-react';el.textContent=m.text;}else if(m.type==='pause'){el.className='msg-pause';el.textContent=m.text;}else{const me=m.uid===myId,t=new Date(m.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});const body=m.type==='stk'?'<div class="msg-stk">'+m.text+'</div>':'<div class="msg-body'+(me?' mine':'')+'">'+esc(m.text)+'</div>';const lks=['👍','❤️','😂'].map(e=>'<button class="like-btn" data-mk="'+key+'" data-em="'+e+'" onclick="toggleLike(\''+key+'\',\''+e+'\')">'+e+'</button>').join('');el.className='msg';el.innerHTML='<div class="msg-top"><div class="msg-av" style="background:'+AVC2[m.name?m.name.charCodeAt(0)%AVC2.length:0]+'">'+((m.name||'?')[0])+'</div><span class="msg-who'+(me?' me':'')+'">'+( m.name||'?')+'</span><span class="msg-when">'+t+'</span></div>'+body+'<div class="msg-likes">'+lks+'</div>';}box.appendChild(el);if(!silent)box.scrollTop=box.scrollHeight;}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let pushT=null;
+window.__push=()=>{if(remoteUpd||!db)return;clearTimeout(pushT);pushT=setTimeout(()=>set(ref(db,'rooms/'+roomId+'/state'),{frames,by:myName,ts:serverTimestamp()}),80);};
+window.saveTactic=()=>{if(!db){alert('單機模式無法儲存');return;}const n=prompt('戰術名稱：','新戰術')||'新戰術';set(ref(db,'rooms/'+roomId+'/tactics/'+Date.now()),{name:n,frames,savedBy:myName});alert('✅「'+n+'」已儲存！');};
+window.copyLink=()=>{navigator.clipboard?.writeText(document.getElementById('share-link').value).catch(()=>{});const b=document.querySelector('.m-copy');if(b){b.textContent='✓ 已複製';setTimeout(()=>b.textContent='複製',2000);}};
+window.shareLine=()=>window.open('https://line.me/R/msg/text/?'+encodeURIComponent(document.getElementById('share-link').value));
+</script>
+
+<script>
+const CV=document.getElementById('court'),ct=CV.getContext('2d');
+
+// ─────────────────────────────────────────────
+//  FIBA 2023 球場規格 (單位 公尺)
+//  全場 28m × 15m；canvas 加四邊各 1m 邊界 → 30m × 17m
+//  SC (scale) = canvas寬像素 / 30m
+//  所有座標透過 m2c(mx, my) 換算到 canvas pixel
+// ─────────────────────────────────────────────
+const FIBA = {
+  courtW: 28,     // 場地寬 (長軸)
+  courtH: 15,     // 場地高 (短軸)
+  border: 1,      // 四邊邊界
+  // 禁區 (key)
+  keyW:   4.90,   // 禁區寬度 → 半寬 2.45m
+  keyD:   5.80,   // 罰球線距底線
+  ftR:    1.80,   // 罰球圈半徑
+  // 限制區弧
+  raR:    1.25,
+  // 籃框
+  bkDist: 1.575,  // 籃框中心距底線
+  bkR:    0.225,  // 籃框環半徑
+  // 籃板 (FIBA: 籃板面距底線 = bkDist - 0.15)
+  bbDist: 1.575 - 0.15, // = 1.425m
+  bbHalf: 0.915,         // 籃板半寬 (全寬 1.83m / 2)
+  // 三分線
+  a3R:    6.75,   // 三分弧半徑
+  a3CornerY: 6.60, // 角落三分直線到中線的 Y 距離 (=7.5-0.9)
+  // 中圈
+  cR:     1.80,
+};
+// 派生：三分弧圓弧起點相對籃框中心的 X 偏移
+FIBA.a3Xoff = Math.sqrt(FIBA.a3R**2 - FIBA.a3CornerY**2); // ≈ 1.4151m
+
+let CW, CH, SC;          // canvas 尺寸 & 比例
+let _originX, _originY;  // 場地原點 (canvas 左上角 = border)
+
+// 座標轉換：公尺座標 → canvas pixel
+// 原點 (0,0) = 場地左邊線 × 上邊線交點 (左下基線中心點在 y=courtH/2)
+function m2c(mx, my) {
+  return {
+    x: _originX + mx * SC,
+    y: _originY + my * SC
+  };
+}
+
+function initCourtDims() {
+  const a = document.getElementById('ca');
+  // canvas 維持 30:17 比例 (含 1m 四邊邊界)
+  let aw = a.clientWidth - 12, ah = a.clientHeight - 12;
+  const ratio = (FIBA.courtW + 2 * FIBA.border) / (FIBA.courtH + 2 * FIBA.border); // 30/17
+  let cw = Math.min(aw, ah * ratio);
+  let ch = cw / ratio;
+  if (ch > ah) { ch = ah; cw = ch * ratio; }
+  CW = Math.floor(cw);
+  CH = Math.floor(ch);
+  CV.width = CW; CV.height = CH;
+  CV.style.width = CW + 'px'; CV.style.height = CH + 'px';
+
+  // draw-canvas 同步
+  const dc = document.getElementById('draw-canvas');
+  dc.width = CW; dc.height = CH;
+  dc.style.width = CW + 'px'; dc.style.height = CH + 'px';
+
+  // ★ SC 以 canvas 寬 / 整體公尺寬 決定 (30m)
+  SC = CW / (FIBA.courtW + 2 * FIBA.border);
+
+  // 場地原點 (canvas pixel)：場地左邊線頂點
+  _originX = FIBA.border * SC;
+  _originY = FIBA.border * SC;
+}
+
+const lw = () => Math.max(1, CW / 600);
+
+// 輔助繪圖（pixel 座標）
+function dln(x1, y1, x2, y2) {
+  ct.beginPath(); ct.moveTo(x1, y1); ct.lineTo(x2, y2); ct.stroke();
+}
+function darc(cx, cy, r, a1, a2, ccw) {
+  ct.beginPath(); ct.arc(cx, cy, r, a1, a2, ccw || false); ct.stroke();
+}
+
+// 輔助繪圖（公尺座標）
+function mln(mx1, my1, mx2, my2) {
+  const a = m2c(mx1, my1), b = m2c(mx2, my2);
+  dln(a.x, a.y, b.x, b.y);
+}
+function marc(mx, my, rM, a1, a2, ccw) {
+  const p = m2c(mx, my);
+  darc(p.x, p.y, rM * SC, a1, a2, ccw);
+}
+
+function drawFloor() {
+  const ox = _originX, oy = _originY;
+  const pw = FIBA.courtW * SC, ph = FIBA.courtH * SC;
+
+  ct.fillStyle = '#07111C'; ct.fillRect(0, 0, CW, CH);
+
+  // 木地板漸層
+  const g = ct.createLinearGradient(ox, oy, ox + pw, oy + ph);
+  g.addColorStop(0, '#8B5E2A'); g.addColorStop(.35, '#A0703A');
+  g.addColorStop(.5, '#B07840'); g.addColorStop(.65, '#A0703A');
+  g.addColorStop(1, '#8B5E2A');
+  ct.fillStyle = g; ct.fillRect(ox, oy, pw, ph);
+
+  // 木紋
+  ct.save(); ct.globalAlpha = .06; ct.strokeStyle = '#3D1A00'; ct.lineWidth = .4;
+  for (let y = oy; y < oy + ph; y += SC * .38) {
+    ct.beginPath(); ct.moveTo(ox, y); ct.lineTo(ox + pw, y); ct.stroke();
+  }
+  ct.restore();
+
+  // 場外暗色邊框區
+  ct.save(); ct.globalAlpha = .28; ct.fillStyle = '#030810';
+  ct.fillRect(0, 0, ox, CH);
+  ct.fillRect(ox + pw, 0, CW - (ox + pw), CH);
+  ct.fillRect(0, 0, CW, oy);
+  ct.fillRect(0, oy + ph, CW, CH - (oy + ph));
+  ct.restore();
+
+  // 中央光暈
+  ct.save();
+  const midX = ox + pw / 2, midY = oy + ph / 2;
+  const rg = ct.createRadialGradient(midX, midY, 0, midX, midY, SC * 6);
+  rg.addColorStop(0, 'rgba(255,200,100,.07)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ct.fillStyle = rg; ct.fillRect(0, 0, CW, CH);
+  ct.restore();
+}
+
+function drawCourt() {
+  drawFloor();
+
+  const W = FIBA.courtW, H = FIBA.courtH;
+  const midY = H / 2; // 中線 Y（公尺，場地本體座標）
+
+  ct.shadowColor = 'rgba(255,255,255,.08)'; ct.shadowBlur = 2;
+  ct.strokeStyle = 'rgba(255,255,255,.88)'; ct.lineWidth = lw();
+
+  // 禁區底色（兩側）
+  const ky = midY - FIBA.keyW / 2;
+  const { x: kfx, y: kfy } = m2c(0, ky);
+  ct.fillStyle = 'rgba(28,60,130,.28)';
+  ct.fillRect(kfx, kfy, FIBA.keyD * SC, FIBA.keyW * SC);                    // 左禁區
+  const { x: krx } = m2c(W - FIBA.keyD, ky);
+  ct.fillRect(krx, kfy, FIBA.keyD * SC, FIBA.keyW * SC);                    // 右禁區
+
+  // 場地外框
+  const oa = m2c(0, 0), ob = m2c(W, H);
+  ct.strokeRect(oa.x, oa.y, W * SC, H * SC);
+
+  // 中線
+  mln(W / 2, 0, W / 2, H);
+
+  // 中圈
+  marc(W / 2, midY, FIBA.cR, 0, Math.PI * 2);
+
+  // 中心點
+  const cp = m2c(W / 2, midY);
+  ct.beginPath(); ct.arc(cp.x, cp.y, Math.max(2, lw() * 1.5), 0, Math.PI * 2);
+  ct.fillStyle = 'rgba(255,255,255,.88)'; ct.fill();
+
+  // 兩側半場
+  drawHalf(1);   // 左側進攻端（basketX = bkDist）
+  drawHalf(-1);  // 右側進攻端（basketX = W - bkDist）
+
+  ct.shadowBlur = 0;
+}
+
+function drawHalf(side) {
+  // side = 1 → 左半場（底線 x=0，籃框 x=bkDist）
+  // side = -1 → 右半場（底線 x=W, 籃框 x=W-bkDist）
+  const W = FIBA.courtW, H = FIBA.courtH;
+  const midY = H / 2;
+
+  // 公尺座標：baselineX, basketX, ftX
+  const baselineX = side === 1 ? 0 : W;
+  const basketX   = side === 1 ? FIBA.bkDist : W - FIBA.bkDist;
+  const ftX       = side === 1 ? FIBA.keyD   : W - FIBA.keyD;
+  const keyTop    = midY - FIBA.keyW / 2;
+  const keyBot    = midY + FIBA.keyW / 2;
+
+  ct.strokeStyle = 'rgba(255,255,255,.88)'; ct.lineWidth = lw();
+
+  // ── 禁區邊線 ──
+  mln(baselineX, keyTop, ftX, keyTop);   // 禁區上邊
+  mln(baselineX, keyBot, ftX, keyBot);   // 禁區下邊
+  mln(ftX, keyTop, ftX, keyBot);          // 罰球線
+
+  // ── 禁區內刻度（距底線 1.75, 2.75, 3.75m，FIBA 外側小標記）──
+  [1.75, 2.75, 3.75].forEach(d => {
+    const tx = side === 1 ? d : W - d;
+    const markLen = 0.20; // 刻度長度 0.20m
+    mln(tx, keyTop, tx, keyTop - markLen);
+    mln(tx, keyBot, tx, keyBot + markLen);
+  });
+
+  // ── 罰球圈（實線半圓朝籃框側 + 虛線半圓朝場中）──
+  // 罰球圈圓心 = 罰球線上，即 (ftX, midY)
+  const ftA1 = side === 1 ? -Math.PI / 2 :  Math.PI / 2;
+  const ftA2 = side === 1 ?  Math.PI / 2 : -Math.PI / 2;
+  marc(ftX, midY, FIBA.ftR, ftA1, ftA2, side === 1);      // 實線：朝籃框側
+
+  ct.save(); ct.setLineDash([SC * .28, SC * .18]);
+  marc(ftX, midY, FIBA.ftR, ftA2, ftA1, side === 1);      // 虛線：朝場中側
+  ct.setLineDash([]); ct.restore();
+
+  // ── 限制區弧（restricted area）──
+  marc(basketX, midY, FIBA.raR, ftA1, ftA2, side === 1);
+
+  // ── 三分線 ──
+  // 角落直線終點 X（公尺）= 籃框X ± a3Xoff（弧與角落直線的交點）
+  const cornerEndX = basketX + side * FIBA.a3Xoff;
+
+  // 角落直線：底線 → 弧起點（上下各一條）
+  mln(baselineX, midY - FIBA.a3CornerY, cornerEndX, midY - FIBA.a3CornerY); // 上
+  mln(baselineX, midY + FIBA.a3CornerY, cornerEndX, midY + FIBA.a3CornerY); // 下
+
+  // 三分弧：從上角到下角，圓心在籃框中心
+  const arcTop = m2c(cornerEndX, midY - FIBA.a3CornerY);
+  const arcBot = m2c(cornerEndX, midY + FIBA.a3CornerY);
+  const bkPx   = m2c(basketX, midY);
+  // 用 canvas arc：計算兩端角度
+  const angTop = Math.atan2(arcTop.y - bkPx.y, arcTop.x - bkPx.x);
+  const angBot = Math.atan2(arcBot.y - bkPx.y, arcBot.x - bkPx.x);
+  ct.beginPath();
+  ct.arc(bkPx.x, bkPx.y, FIBA.a3R * SC, angTop, angBot, side === -1);
+  ct.stroke();
+
+  // ── 籃板線 ──
+  // 籃板面距底線 = bbDist = 1.425m，半寬 = bbHalf = 0.915m
+  const bbX = side === 1 ? FIBA.bbDist : W - FIBA.bbDist;
+  ct.lineWidth = lw() * 1.6;
+  mln(bbX, midY - FIBA.bbHalf, bbX, midY + FIBA.bbHalf);
+  ct.lineWidth = lw();
+
+  // ── 籃框環 ──
+  const bkP = m2c(basketX, midY);
+  ct.shadowColor = '#FF5E1A'; ct.shadowBlur = 7;
+  ct.beginPath(); ct.arc(bkP.x, bkP.y, FIBA.bkR * SC, 0, Math.PI * 2);
+  ct.strokeStyle = '#FF5E1A'; ct.lineWidth = lw() * 2; ct.stroke();
+  ct.shadowBlur = 0; ct.lineWidth = lw(); ct.strokeStyle = 'rgba(255,255,255,.88)';
+}
+// DATA
+let frames=[{name:'Frame 1',players:[],ball:null,arrows:[],screens:[]}];
+let curFrame=0,tool='select',col='#FF5E1A',pSize=18;
+let sel=null,drawing=false,drawPts=[],drag=null,dox,doy,pctr=1,pendingP=null;
+let history=[],animPlaying=false,animRaf=null,animT=0,animStart=null,animSpd=1;
+let currentRP='frames',dragSrcIdx=null;
+const PR=()=>pSize;const CF=()=>frames[curFrame];
+function lerp(a,b,t){return a+(b-a)*t;}
+function simplify(pts,eps=3){if(pts.length<=2)return pts;let maxD=0,idx=0;const x1=pts[0].x,y1=pts[0].y,x2=pts[pts.length-1].x,y2=pts[pts.length-1].y;const len=Math.sqrt((x2-x1)**2+(y2-y1)**2)||1;for(let i=1;i<pts.length-1;i++){const d=Math.abs((y2-y1)*pts[i].x-(x2-x1)*pts[i].y+x2*y1-y2*x1)/len;if(d>maxD){maxD=d;idx=i;}}if(maxD>eps)return[...simplify(pts.slice(0,idx+1),eps).slice(0,-1),...simplify(pts.slice(idx),eps)];return[pts[0],pts[pts.length-1]];}
+function lighten(hex,a){let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);r=Math.min(255,r+Math.round(255*a));g=Math.min(255,g+Math.round(255*a));b=Math.min(255,b+Math.round(255*a));return'#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');}
+function drawArrowPath(pts,style,color,isSel){if(!pts||pts.length<2)return;ct.save();const c=isSel?'#FFD600':color||'#fff';ct.strokeStyle=c;let lw2=isSel?2.8:Math.max(1.5,CW/460);if(style==='pass'){ct.setLineDash([SC*.3,SC*.18]);lw2*=.9;}if(style==='drib')lw2*=1.4;ct.lineWidth=lw2;ct.shadowColor=isSel?'#FFD600':c;ct.shadowBlur=isSel?8:3;ct.beginPath();ct.moveTo(pts[0].x,pts[0].y);if(pts.length===2){ct.lineTo(pts[1].x,pts[1].y);}else{for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];ct.bezierCurveTo(p1.x+(p2.x-p0.x)/6,p1.y+(p2.y-p0.y)/6,p2.x-(p3.x-p1.x)/6,p2.y-(p3.y-p1.y)/6,p2.x,p2.y);}}ct.stroke();ct.setLineDash([]);const n=pts.length,ex=pts[n-1].x,ey=pts[n-1].y,px=pts[n-2].x,py=pts[n-2].y;const ang=Math.atan2(ey-py,ex-px),h=Math.max(9,CW/70);ct.fillStyle=c;ct.shadowColor=c;ct.shadowBlur=4;ct.beginPath();ct.moveTo(ex,ey);ct.lineTo(ex-h*Math.cos(ang-.42),ey-h*Math.sin(ang-.42));ct.lineTo(ex-h*Math.cos(ang+.42),ey-h*Math.sin(ang+.42));ct.closePath();ct.fill();if(isSel){ct.shadowBlur=0;pts.forEach((p,i)=>{if(i===0||i===pts.length-1)return;ct.beginPath();ct.arc(p.x,p.y,6,0,Math.PI*2);ct.fillStyle='#FFD600';ct.shadowColor='#FFD600';ct.shadowBlur=6;ct.fill();ct.strokeStyle='rgba(0,0,0,.6)';ct.shadowBlur=0;ct.lineWidth=1.5;ct.stroke();});}ct.restore();}
+function drawScreen(s,isSel){ct.save();const sz=PR()*.95;if(isSel){ct.shadowColor='#FFD600';ct.shadowBlur=10;}ct.strokeStyle=isSel?'#FFD600':s.color;ct.lineWidth=Math.max(2.2,CW/320);ct.strokeRect(s.x-sz/2,s.y-sz/2,sz,sz);ct.restore();}
+function drawPlayer(p,isSel){const r=PR();ct.save();if(isSel){ct.beginPath();ct.arc(p.x,p.y,r+7,0,Math.PI*2);ct.strokeStyle='#FFD600';ct.lineWidth=2;ct.shadowColor='#FFD600';ct.shadowBlur=10;ct.stroke();ct.shadowBlur=0;}ct.beginPath();ct.arc(p.x+2,p.y+3,r,0,Math.PI*2);ct.fillStyle='rgba(0,0,0,.4)';ct.fill();const grad=ct.createRadialGradient(p.x-r*.3,p.y-r*.3,0,p.x,p.y,r);grad.addColorStop(0,lighten(p.color,.3));grad.addColorStop(1,p.color);ct.beginPath();ct.arc(p.x,p.y,r,0,Math.PI*2);ct.fillStyle=grad;ct.fill();ct.strokeStyle='rgba(255,255,255,.5)';ct.lineWidth=1.5;ct.stroke();if(p.jersey){const jx=p.x+r*.65,jy=p.y-r*.65,jr=r*.4;ct.beginPath();ct.arc(jx,jy,jr,0,Math.PI*2);ct.fillStyle='rgba(0,0,0,.8)';ct.fill();ct.font='bold '+Math.max(7,jr*.85)+'px Barlow Condensed,sans-serif';ct.fillStyle='#fff';ct.textAlign='center';ct.textBaseline='middle';ct.fillText(p.jersey,jx,jy);}const lbl=p.name||String(p.num),fs=lbl.length>2?Math.max(8,r*.6):Math.max(10,r*.82);ct.fillStyle='#fff';ct.font='bold '+fs+'px Barlow Condensed,sans-serif';ct.textAlign='center';ct.textBaseline='middle';ct.fillText(lbl,p.x,p.y);if(p.name&&p.name.trim()){const tf=Math.max(8,r*.65);ct.font=tf+'px Noto Sans TC,sans-serif';const tw=ct.measureText(p.name).width+10;const ty=p.y+r+3;ct.fillStyle='rgba(0,0,0,.75)';ct.beginPath();ct.roundRect(p.x-tw/2,ty,tw,tf+5,4);ct.fill();ct.fillStyle='rgba(255,255,255,.9)';ct.fillText(p.name,p.x,ty+tf/2+2.5);}ct.restore();}
+function drawBall(b,isSel){const r=Math.max(10,pSize*.58);ct.save();if(isSel){ct.beginPath();ct.arc(b.x,b.y,r+7,0,Math.PI*2);ct.strokeStyle='#FFD600';ct.lineWidth=2;ct.shadowColor='#FFD600';ct.shadowBlur=10;ct.stroke();ct.shadowBlur=0;}ct.beginPath();ct.arc(b.x+2,b.y+3,r,0,Math.PI*2);ct.fillStyle='rgba(0,0,0,.4)';ct.fill();const bg=ct.createRadialGradient(b.x-r*.3,b.y-r*.3,0,b.x,b.y,r);bg.addColorStop(0,'#FF8C42');bg.addColorStop(.6,'#FF5E1A');bg.addColorStop(1,'#CC3A00');ct.beginPath();ct.arc(b.x,b.y,r,0,Math.PI*2);ct.fillStyle=bg;ct.fill();ct.strokeStyle='rgba(0,0,0,.5)';ct.lineWidth=1;ct.beginPath();ct.arc(b.x,b.y,r,.3,Math.PI+.3);ct.stroke();ct.beginPath();ct.moveTo(b.x-r,b.y);ct.lineTo(b.x+r,b.y);ct.stroke();ct.restore();}
+function renderFrameData(f){if(!f)return;(f.screens||[]).forEach((s,i)=>drawScreen(s,!animPlaying&&sel&&sel.type==='scr'&&sel.i===i));(f.arrows||[]).forEach((a,i)=>drawArrowPath(a.pts,a.style,a.color,!animPlaying&&sel&&(sel.type==='arr'||sel.type==='ctrl')&&sel.arrI===i));(f.players||[]).forEach((p,i)=>drawPlayer(p,!animPlaying&&sel&&sel.type==='ply'&&sel.i===i));if(f.ball)drawBall(f.ball,!animPlaying&&sel&&sel.type==='bal');}
+function render(){if(!CW)return;drawCourt();renderFrameData(CF());if(drawing&&drawPts.length>1){ct.save();ct.strokeStyle=col;ct.lineWidth=Math.max(1.5,CW/460);ct.shadowColor=col;ct.shadowBlur=4;if(tool==='pass')ct.setLineDash([SC*.3,SC*.18]);if(tool==='drib')ct.lineWidth*=1.4;ct.beginPath();ct.moveTo(drawPts[0].x,drawPts[0].y);for(let i=1;i<drawPts.length;i++)ct.lineTo(drawPts[i].x,drawPts[i].y);ct.stroke();ct.setLineDash([]);ct.restore();}}
+// ANIMATION
+function playAll(){if(frames.length<2){alert('至少需要2個幀！');return;}stopAnim(false);animPlaying=true;animT=0;animStart=null;document.getElementById('ap-pb').textContent='⏸ 暫停';document.getElementById('anim-bar').classList.add('show');runAnim();}
+function runAnim(){if(!animPlaying)return;const now=performance.now(),totalDur=(frames.length-1)*1000/animSpd;if(!animStart)animStart=now-animT*totalDur;animT=Math.min(1,(now-animStart)/totalDur);const p=animT*(frames.length-1),fi=Math.min(Math.floor(p),frames.length-2),frac=p-fi;const f0=frames[fi],f1=frames[fi+1];if(!f0||!f1){stopAnim();return;}const maxP=Math.max(f0.players.length,f1.players.length);const intP=[];for(let i=0;i<maxP;i++){const p0=f0.players[i],p1=f1.players[i];if(p0&&p1)intP.push({...p0,x:lerp(p0.x,p1.x,frac),y:lerp(p0.y,p1.y,frac)});else if(p0)intP.push({...p0});else if(p1)intP.push({...p1});}const intBall=f0.ball&&f1.ball?{...f0.ball,x:lerp(f0.ball.x,f1.ball.x,frac),y:lerp(f0.ball.y,f1.ball.y,frac)}:f0.ball;const prog=Math.round(animT*100);document.getElementById('ap-prog').textContent=prog+'%';document.getElementById('ap-fill').style.width=prog+'%';const cf=document.getElementById('ctl-fill');if(cf)cf.style.width=prog+'%';const cp=document.getElementById('ctl-prog');if(cp)cp.textContent=prog+'%';drawCourt();renderFrameData({...f0,players:intP,ball:intBall});if(window.__pushBcast)window.__pushBcast(animT,true);if(animT<1)animRaf=requestAnimationFrame(runAnim);else{animPlaying=false;document.getElementById('ap-pb').textContent='▶ 播放';document.getElementById('ap-prog').textContent='100%';if(window.__pushBcast)window.__pushBcast(1,false);}}
+function stopAnim(notify=true){cancelAnimationFrame(animRaf);animPlaying=false;animT=0;animStart=null;document.getElementById('ap-pb').textContent='▶ 播放';document.getElementById('ap-fill').style.width='0%';render();if(notify&&window.__pushBcast)window.__pushBcast(0,false);}
+function toggleAnim(){if(animPlaying)stopAnim();else playAll();}
+window.toggleAnim=toggleAnim;
+function setSpd(s,btn){animSpd=s;document.querySelectorAll('.spd-b').forEach(b=>b.classList.remove('act'));btn.classList.add('act');}
+window.setSpd=setSpd;
+// FRAMES
+function addFrame(){snap();frames.push({name:'Frame '+(frames.length+1),players:[],ball:null,arrows:[],screens:[]});curFrame=frames.length-1;render();renderFrameList();if(window.__push)window.__push();}
+window.addFrame=addFrame;
+function dupFrame(i){snap();const f=JSON.parse(JSON.stringify(frames[i]));f.name=(f.name||'Frame')+'（副本）';frames.splice(i+1,0,f);curFrame=i+1;render();renderFrameList();if(window.__push)window.__push();}
+window.dupFrame=dupFrame;
+function delFrame(i){if(frames.length<=1){alert('至少需要一個幀！');return;}snap();frames.splice(i,1);curFrame=Math.min(curFrame,frames.length-1);render();renderFrameList();if(window.__push)window.__push();}
+window.delFrame=delFrame;
+function selectFrame(i){curFrame=i;sel=null;render();renderFrameList();}
+window.selectFrame=selectFrame;
+// FRAME PANEL
+function renderFrameList(){
+  if(currentRP!=='frames')return;
+  const body=document.getElementById('rp-body');if(!body)return;
+  const isHost=window.__isHost;
+  body.innerHTML='<div style="display:flex;flex-direction:column;height:100%"><div class="anim-ctl"><div class="ctl-ttl">幀式動畫</div><div class="ctl-row"><button class="ctl-play" onclick="toggleAnim()">▶ 播放全部幀</button><button class="ctl-stop" onclick="stopAnim()">■</button><button class="ctl-add" onclick="addFrame()">＋幀</button><span class="ctl-prog" id="ctl-prog">0%</span></div><div class="ctl-track"><div class="ctl-fill" id="ctl-fill"></div></div><div style="display:flex;gap:4px;margin-top:7px;align-items:center"><span style="font-size:9px;color:var(--t4)">速度：</span><div class="spd-g"><button class="spd-b" onclick="setSpd(.5,this)">.5x</button><button class="spd-b act" onclick="setSpd(1,this)">1x</button><button class="spd-b" onclick="setSpd(2,this)">2x</button></div></div></div>'+(isHost?'<div class="bcast-ctl"><div class="bcast-ctl-title">協作廣播</div><button class="bcast-main-btn idle" id="bcast-main-btn" onclick="toggleBcast()">📡 開始廣播（同步播放）</button><div class="bcast-desc">✅ 全體同時看到播放動畫<br>✅ 球員可 👍 讚 或 ✋ 暫停<br>✅ 右下角 ✏️ 隨時開關畫圖<br>✅ 標註即時同步給所有人</div></div>':'<div style="padding:8px 12px;background:rgba(0,212,255,.04);border-bottom:1px solid rgba(0,212,255,.1);font-size:9px;color:var(--a1);line-height:1.8">📡 教練廣播時同步播放<br>可按 👍 讚 或 ✋ 暫停<br>右下角 ✏️ 開啟畫圖討論</div>')+'<div class="frame-list" id="frame-list" style="flex:1;overflow-y:auto;padding:8px"></div></div>';
+  const list=document.getElementById('frame-list');
+  frames.forEach((f,i)=>{
+    const item=document.createElement('div');
+    item.className='fi'+(i===curFrame?' act':'');item.draggable=true;
+    item.innerHTML='<div class="fi-hdr"><span class="fi-drag">⠿</span><span class="fi-num">'+String(i+1).padStart(2,'0')+'</span><span class="fi-name" id="fn-'+i+'">'+(f.name||'Frame '+(i+1))+'</span><input class="fi-name-inp" id="fni-'+i+'" value="'+(f.name||'Frame '+(i+1))+'" maxlength="20"/><div class="fi-acts"><button class="fa-btn" onclick="dupFrame('+i+');event.stopPropagation()">⧉</button><button class="fa-btn del" onclick="delFrame('+i+');event.stopPropagation()">✕</button></div></div><div class="fi-prev"><canvas class="fi-canvas" width="220" height="'+Math.round(220*15/28)+'"></canvas></div>';
+    list.appendChild(item);
+    setTimeout(()=>{const mc=item.querySelector('.fi-canvas');if(mc)drawMini(mc,f);},10);
+    const fn=item.querySelector('#fn-'+i),fni=item.querySelector('#fni-'+i);
+    fn.addEventListener('dblclick',e=>{e.stopPropagation();fn.style.display='none';fni.style.display='block';fni.focus();fni.select();});
+    fni.addEventListener('blur',()=>{frames[i].name=fni.value.trim()||'Frame '+(i+1);fn.textContent=frames[i].name;fn.style.display='';fni.style.display='none';if(window.__push)window.__push();});
+    fni.addEventListener('keydown',e=>{if(e.key==='Enter')fni.blur();if(e.key==='Escape')fni.blur();});
+    fni.addEventListener('click',e=>e.stopPropagation());
+    item.onclick=()=>selectFrame(i);
+    item.addEventListener('dragstart',e=>{dragSrcIdx=i;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    item.addEventListener('dragend',()=>{item.classList.remove('dragging');list.querySelectorAll('.fi').forEach(d=>d.classList.remove('drag-over'));});
+    item.addEventListener('dragover',e=>{e.preventDefault();list.querySelectorAll('.fi').forEach(d=>d.classList.remove('drag-over'));if(dragSrcIdx!==i)item.classList.add('drag-over');});
+    item.addEventListener('drop',e=>{e.preventDefault();if(dragSrcIdx===null||dragSrcIdx===i)return;snap();const moved=frames.splice(dragSrcIdx,1)[0];frames.splice(i,0,moved);curFrame=i;dragSrcIdx=null;render();renderFrameList();if(window.__push)window.__push();});
+  });
+}
+function drawMini(mc,f){
+  if(!CW)return;
+  const ctx=mc.getContext('2d'),W=mc.width,H=mc.height;
+  // mini canvas 以場地本體 28×15 填滿 (不含邊界，球員座標是主 canvas pixel)
+  // 主 canvas 場地區域：_originX ~ _originX+courtW*SC
+  const courtPW=FIBA.courtW*SC, courtPH=FIBA.courtH*SC;
+  const sx=W/courtPW, sy=H/courtPH;
+  // 主 canvas pixel → mini canvas pixel（扣除場地原點偏移）
+  function tm(px,py){return{mx:(px-_originX)*sx, my:(py-_originY)*sy};}
+  const mSC=W/FIBA.courtW; // mini SC (px/m)
+
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#8B5E2A';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=.6;
+  ctx.strokeRect(.5,.5,W-1,H-1);
+  // 中線
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
+  // 中圈
+  ctx.beginPath();ctx.arc(W/2,H/2,FIBA.cR*mSC,0,Math.PI*2);ctx.stroke();
+  // 籃框
+  ctx.fillStyle='#FF5E1A';
+  const bklX=FIBA.bkDist*mSC, bkrX=(FIBA.courtW-FIBA.bkDist)*mSC, bkY=H/2;
+  ctx.beginPath();ctx.arc(bklX,bkY,FIBA.bkR*mSC,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(bkrX,bkY,FIBA.bkR*mSC,0,Math.PI*2);ctx.fill();
+  // 箭頭
+  (f.arrows||[]).forEach(a=>{if(!a.pts||a.pts.length<2)return;const pm=tm(a.pts[0].x,a.pts[0].y);ctx.strokeStyle=a.color||'#fff';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(pm.mx,pm.my);for(let i=1;i<a.pts.length;i++){const q=tm(a.pts[i].x,a.pts[i].y);ctx.lineTo(q.mx,q.my);}ctx.stroke();});
+  // 球員
+  (f.players||[]).forEach(p=>{const pm=tm(p.x,p.y),r=Math.max(4,pSize*.45*sx);ctx.beginPath();ctx.arc(pm.mx,pm.my,r,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();ctx.font='bold '+Math.max(5,r*.85)+'px Barlow Condensed,sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.name?p.name[0]:p.num,pm.mx,pm.my);});
+  // 球
+  if(f.ball){const bm=tm(f.ball.x,f.ball.y),r=Math.max(3,pSize*.38*sx);ctx.beginPath();ctx.arc(bm.mx,bm.my,r,0,Math.PI*2);ctx.fillStyle='#FF5E1A';ctx.fill();}
+}
+// TOOLS PANEL
+function renderToolsPanel(){
+  const body=document.getElementById('rp-body');if(!body)return;
+  body.innerHTML='<div class="tp-body"><div class="tp-sec"><div class="tp-ttl">球員顏色</div><div class="c-swatches" id="color-row"></div></div><div class="tp-sec"><div class="tp-ttl">球員大小</div><div class="sz-row"><input type="range" class="sz-slider" id="sz-sl" min="12" max="28" value="'+pSize+'" oninput="setPS(this.value)"/><span class="sz-val" id="sz-val">'+pSize+'</span></div></div><div class="tp-sec"><div class="tp-ttl">⚡ 一鍵戰術</div><div class="tc-grid"><div class="tc-card" onclick="loadT(\'fb\')"><span class="tc-icon">⚡</span><div class="tc-label">快攻反擊</div></div><div class="tc-card" onclick="loadT(\'pr\')"><span class="tc-icon">🔄</span><div class="tc-label">Pick&Roll</div></div><div class="tc-card" onclick="loadT(\'z23\')"><span class="tc-icon">🛡</span><div class="tc-label">2-3 區域</div></div><div class="tc-card" onclick="loadT(\'box\')"><span class="tc-icon">📦</span><div class="tc-label">Box</div></div><div class="tc-card" onclick="loadT(\'press\')"><span class="tc-icon">🔥</span><div class="tc-label">全場緊迫</div></div><div class="tc-card" onclick="loadT(\'iso\')"><span class="tc-icon">⭐</span><div class="tc-label">單打空間</div></div><div class="tc-card" onclick="loadT(\'horns\')"><span class="tc-icon">🐂</span><div class="tc-label">Horns</div></div><div class="tc-card" onclick="clearCurrentFrame()" style="border-color:rgba(255,61,90,.2)"><span class="tc-icon">🗑</span><div class="tc-label danger">清除本幀</div></div></div></div><div class="tp-sec"><div class="tp-ttl">在線成員</div><div style="font-size:10px;color:var(--t4);line-height:1.8">'+((window.__users||[]).map(u=>'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><div style="width:18px;height:18px;border-radius:50%;background:'+(u.color||'#555')+';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">'+u.name[0]+'</div>'+u.name+(u.isHost?'<span style="font-size:8px;color:var(--e2);margin-left:4px">🎙主持</span>':'')+'</div>').join('')||'尚無其他成員')+'</div></div></div>';
+  buildColors();
+}
+function switchRP(tab){currentRP=tab;document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('act'));document.getElementById('rt-'+tab).classList.add('act');if(tab==='frames')renderFrameList();else if(tab==='tools')renderToolsPanel();}
+window.switchRP=switchRP;
+// ★★★ INPUT - hDown 核心修正
+// 畫圖模式開啟時 draw-canvas 的 pointer-events:all 優先接收，court 收不到事件
+// 因此只需要移除 animPlaying 對「放置球員/球」的阻擋
+function getPos(e){const r=CV.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;return{x:(cx-r.left)*(CV.width/r.width),y:(cy-r.top)*(CV.height/r.height)};}
+function hitTest(pos){const r=PR();const f=CF();if(sel&&sel.type==='arr'){const a=f.arrows[sel.arrI];if(a)for(let i=1;i<a.pts.length-1;i++)if(Math.hypot(pos.x-a.pts[i].x,pos.y-a.pts[i].y)<9)return{type:'ctrl',arrI:sel.arrI,ptI:i};}for(let i=f.players.length-1;i>=0;i--)if(Math.hypot(pos.x-f.players[i].x,pos.y-f.players[i].y)<r+7)return{type:'ply',i};if(f.ball&&Math.hypot(pos.x-f.ball.x,pos.y-f.ball.y)<Math.max(10,pSize*.58)+7)return{type:'bal'};for(let i=(f.screens||[]).length-1;i>=0;i--){const s=f.screens[i];if(Math.abs(pos.x-s.x)<r&&Math.abs(pos.y-s.y)<r)return{type:'scr',i};}for(let i=(f.arrows||[]).length-1;i>=0;i--){const a=f.arrows[i];if(!a.pts||a.pts.length<2)continue;for(let j=0;j<a.pts.length-1;j++){const px=a.pts[j].x,py=a.pts[j].y,qx=a.pts[j+1].x,qy=a.pts[j+1].y,dx=qx-px,dy=qy-py,len=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((pos.x-px)*dx+(pos.y-py)*dy)/len));if(Math.hypot(pos.x-(px+t*dx),pos.y-(py+t*dy))<12)return{type:'arr',arrI:i};}}return null;}
+function showNP(p){pendingP=p;const np=document.getElementById('npw'),ni=document.getElementById('np-n'),nn=document.getElementById('np-num');const r=CV.getBoundingClientRect(),area=document.getElementById('ca'),ar=area.getBoundingClientRect();let left=p.x*(r.width/CV.width)+r.left-ar.left+15,top=p.y*(r.height/CV.height)+r.top-ar.top+15;if(left+190>ar.width)left-=205;if(top+130>ar.height)top-=140;np.style.left=left+'px';np.style.top=top+'px';np.style.display='block';ni.value=p.name||'';nn.value=p.jersey||'';setTimeout(()=>ni.focus(),80);}
+function confirmNP(){const v=document.getElementById('np-n').value.trim(),n=document.getElementById('np-num').value.trim();if(pendingP){pendingP.name=v||'';if(n)pendingP.jersey=parseInt(n);}document.getElementById('npw').style.display='none';pendingP=null;render();if(window.__push)window.__push();}
+function cancelNP(){document.getElementById('npw').style.display='none';pendingP=null;}
+window.confirmNP=confirmNP;window.cancelNP=cancelNP;
+document.getElementById('np-n').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('np-num').focus();if(e.key==='Escape')cancelNP();});
+document.getElementById('np-num').addEventListener('keydown',e=>{if(e.key==='Enter')confirmNP();if(e.key==='Escape')cancelNP();});
+let lpTimer=null;
+function hDown(e){
+  // ★ 關鍵修正：不再用 animPlaying 封鎖所有操作
+  // 畫路線工具才限制（避免播放中亂畫）
+  const pos=getPos(e);
+  document.getElementById('npw').style.display='none';
+  if(tool==='player'){
+    snap();
+    const p={x:pos.x,y:pos.y,color:col,num:pctr++,name:'',jersey:null};
+    CF().players.push(p);sel={type:'ply',i:CF().players.length-1};
+    render();showNP(p);if(window.__push)window.__push();return;
+  }
+  if(tool==='ball'){snap();CF().ball={x:pos.x,y:pos.y};sel={type:'bal'};render();if(window.__push)window.__push();return;}
+  if(tool==='screen'){snap();if(!CF().screens)CF().screens=[];CF().screens.push({x:pos.x,y:pos.y,color:col});sel={type:'scr',i:CF().screens.length-1};render();if(window.__push)window.__push();return;}
+  if(tool==='cut'||tool==='pass'||tool==='drib'){
+    if(animPlaying)return;// 畫路線時才不允許（避免混亂）
+    drawing=true;drawPts=[{x:pos.x,y:pos.y}];return;
+  }
+  if(tool==='select'){const h=hitTest(pos);sel=h;drag=h;if(h){dox=pos.x;doy=pos.y;}if(h&&h.type==='ply')lpTimer=setTimeout(()=>{showNP(CF().players[h.i]);lpTimer=null;},500);render();}
+}
+function hMove(e){
+  if(animPlaying&&tool!=='select')return;
+  const pos=getPos(e);if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  if((tool==='cut'||tool==='pass'||tool==='drib')&&drawing){drawPts.push({x:pos.x,y:pos.y});render();return;}
+  if(tool==='select'&&drag){const dx=pos.x-dox,dy=pos.y-doy;if(drag.type==='ply'){CF().players[drag.i].x+=dx;CF().players[drag.i].y+=dy;}else if(drag.type==='bal'){CF().ball.x+=dx;CF().ball.y+=dy;}else if(drag.type==='scr'){CF().screens[drag.i].x+=dx;CF().screens[drag.i].y+=dy;}else if(drag.type==='arr'){CF().arrows[drag.arrI].pts.forEach(p=>{p.x+=dx;p.y+=dy;});}else if(drag.type==='ctrl'){CF().arrows[drag.arrI].pts[drag.ptI].x+=dx;CF().arrows[drag.arrI].pts[drag.ptI].y+=dy;}dox=pos.x;doy=pos.y;render();if(window.__push)window.__push();}
+}
+function hUp(e){
+  if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  if((tool==='cut'||tool==='pass'||tool==='drib')&&drawing){if(drawPts.length>1&&Math.hypot(drawPts[drawPts.length-1].x-drawPts[0].x,drawPts[drawPts.length-1].y-drawPts[0].y)>14){snap();const pts=simplify(drawPts,3);if(!CF().arrows)CF().arrows=[];CF().arrows.push({pts,style:tool,color:col});sel={type:'arr',arrI:CF().arrows.length-1};if(window.__push)window.__push();}drawing=false;drawPts=[];render();renderFrameList();return;}
+  drag=null;
+}
+function hDbl(e){if(animPlaying)return;const pos=getPos(e),h=hitTest(pos);if(h&&h.type==='ply')showNP(CF().players[h.i]);if(h&&h.type==='arr'){const a=CF().arrows[h.arrI];let minD=Infinity,bestJ=0;for(let j=0;j<a.pts.length-1;j++){const px=a.pts[j].x,py=a.pts[j].y,qx=a.pts[j+1].x,qy=a.pts[j+1].y,t=Math.max(0,Math.min(1,((pos.x-px)*(qx-px)+(pos.y-py)*(qy-py))/((qx-px)**2+(qy-py)**2||1)));const d=Math.hypot(pos.x-(px+t*(qx-px)),pos.y-(py+t*(qy-py)));if(d<minD){minD=d;bestJ=j;}}a.pts.splice(bestJ+1,0,{x:pos.x,y:pos.y});sel={type:'arr',arrI:h.arrI};render();if(window.__push)window.__push();}}
+CV.addEventListener('mousedown',hDown);CV.addEventListener('mousemove',hMove);CV.addEventListener('mouseup',hUp);CV.addEventListener('dblclick',hDbl);
+CV.addEventListener('touchstart',e=>{e.preventDefault();hDown(e);},{passive:false});
+CV.addEventListener('touchmove',e=>{e.preventDefault();hMove(e);},{passive:false});
+CV.addEventListener('touchend',e=>{e.preventDefault();hUp(e);},{passive:false});
+function setTool(t,btn){tool=t;sel=null;drawing=false;drawPts=[];document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('act'));if(btn)btn.classList.add('act');CV.className=t==='select'?'c-sel':'c-def';render();}
+window.setTool=setTool;
+function setCol(c,el){col=c;document.querySelectorAll('.c-sw').forEach(d=>d.classList.remove('act'));el.classList.add('act');}
+window.setCol=setCol;
+function setPS(v){pSize=parseInt(v);const sv=document.getElementById('sz-val');if(sv)sv.textContent=v;render();}
+window.setPS=setPS;
+function buildColors(){const row=document.getElementById('color-row');if(!row)return;row.innerHTML='';['#FF5E1A','#2979FF','#00C853','#FFD600','#AA00FF','#FF1744','#aaa'].forEach((c,i)=>{const el=document.createElement('div');el.className='c-sw'+(i===0?' act':'');el.style.background=c;if(i===0)el.style.boxShadow='0 0 0 3px #fff';el.onclick=()=>setCol(c,el);row.appendChild(el);});}
+function buildAnnoColors(){const div=document.getElementById('anno-colors');if(!div)return;div.innerHTML='';['#FF5E1A','#FFD600','#00E676','#00D4FF','#fff'].forEach((c,i)=>{const el=document.createElement('div');el.className='anno-color'+(i===0?' act':'');el.style.background=c;el.onclick=()=>{annoColor=c;document.querySelectorAll('.anno-color').forEach(d=>d.classList.remove('act'));el.classList.add('act');};div.appendChild(el);});}
+function delSel(){if(!sel)return;snap();const f=CF();if(sel.type==='ply')f.players.splice(sel.i,1);else if(sel.type==='bal')f.ball=null;else if(sel.type==='arr')f.arrows.splice(sel.arrI,1);else if(sel.type==='scr')f.screens.splice(sel.i,1);sel=null;render();if(window.__push)window.__push();}
+window.delSel=delSel;
+document.addEventListener('keydown',e=>{if(e.key==='Delete'||e.key==='Backspace'){if(['INPUT','TEXTAREA'].includes(document.activeElement&&document.activeElement.tagName))return;delSel();}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!['INPUT','TEXTAREA'].includes(document.activeElement&&document.activeElement.tagName)){e.preventDefault();undoAct();}});
+function snap(){history.push(JSON.parse(JSON.stringify({frames,curFrame,pctr})));if(history.length>30)history.shift();}
+function undoAct(){if(!history.length)return;const p=history.pop();frames=p.frames;curFrame=p.curFrame;pctr=p.pctr;render();renderFrameList();if(window.__push)window.__push();}
+window.undoAct=undoAct;
+function clearCurrentFrame(){snap();CF().players=[];CF().ball=null;CF().arrows=[];CF().screens=[];sel=null;render();renderFrameList();if(window.__push)window.__push();}
+window.clearCurrentFrame=clearCurrentFrame;
+// TACTICS
+function loadT(n){snap();const f=CF();
+// px(fx,fy): 分數座標 → canvas pixel（fx/fy 是場地寬高的比例 0~1）
+const px=(fx,fy)=>{const p=m2c(FIBA.courtW*fx,FIBA.courtH*fy);return{x:p.x,y:p.y};};
+if(n==='fb'){f.players=[{...px(.09,.5),color:'#FF5E1A',num:pctr++,name:'PG',jersey:1},{...px(.39,.18),color:'#FF5E1A',num:pctr++,name:'SF',jersey:3},{...px(.39,.82),color:'#FF5E1A',num:pctr++,name:'SG',jersey:2},{...px(.59,.28),color:'#FF5E1A',num:pctr++,name:'PF',jersey:4},{...px(.59,.72),color:'#FF5E1A',num:pctr++,name:'C',jersey:5}];f.ball={...px(.09,.5)};f.arrows=[{pts:[px(.09,.5),px(.24,.34),px(.39,.18)],style:'pass',color:'#FFD600'},{pts:[px(.39,.18),px(.28,.12),px(.18,.08)],style:'cut',color:'#FF5E1A'},{pts:[px(.39,.82),px(.28,.88),px(.18,.92)],style:'cut',color:'#FF5E1A'}];f.screens=[];}
+else if(n==='pr'){f.players=[{...px(.50,.5),color:'#2979FF',num:pctr++,name:'PG',jersey:1},{...px(.38,.5),color:'#2979FF',num:pctr++,name:'C',jersey:5},{...px(.26,.14),color:'#2979FF',num:pctr++,name:'SF',jersey:3},{...px(.26,.86),color:'#2979FF',num:pctr++,name:'SG',jersey:2},{...px(.14,.3),color:'#2979FF',num:pctr++,name:'PF',jersey:4}];f.ball={...px(.50,.5)};f.arrows=[{pts:[px(.50,.5),px(.44,.5),px(.40,.5)],style:'drib',color:'#FFD600'},{pts:[px(.38,.5),px(.32,.35),px(.27,.22)],style:'cut',color:'#2979FF'},{pts:[px(.40,.5),px(.34,.44),px(.20,.38)],style:'cut',color:'#2979FF'}];f.screens=[{...px(.37,.5),color:'#2979FF'}];}
+else if(n==='z23'){f.players=[{...px(.44,.5),color:'#aaa',num:pctr++,name:'PG'},{...px(.27,.25),color:'#aaa',num:pctr++,name:'SF'},{...px(.27,.75),color:'#aaa',num:pctr++,name:'SG'},{...px(.12,.12),color:'#aaa',num:pctr++,name:'PF'},{...px(.12,.88),color:'#aaa',num:pctr++,name:'C'}];f.ball=null;f.arrows=[];f.screens=[];}
+else if(n==='box'){f.players=[{...px(.39,.5),color:'#00C853',num:pctr++,name:'PG',jersey:1},{...px(.20,.22),color:'#00C853',num:pctr++,name:'SG',jersey:2},{...px(.20,.78),color:'#00C853',num:pctr++,name:'SF',jersey:3},{...px(.10,.22),color:'#00C853',num:pctr++,name:'PF',jersey:4},{...px(.10,.78),color:'#00C853',num:pctr++,name:'C',jersey:5}];f.ball={...px(.39,.5)};f.arrows=[];f.screens=[];}
+else if(n==='press'){f.players=[{...px(.61,.22),color:'#FFD600',num:pctr++,name:'',jersey:1},{...px(.61,.78),color:'#FFD600',num:pctr++,name:'',jersey:2},{...px(.43,.5),color:'#FFD600',num:pctr++,name:'',jersey:3},{...px(.29,.33),color:'#FFD600',num:pctr++,name:'',jersey:4},{...px(.29,.67),color:'#FFD600',num:pctr++,name:'',jersey:5}];f.ball=null;f.arrows=[];f.screens=[];}
+else if(n==='iso'){f.players=[{...px(.43,.5),color:'#AA00FF',num:pctr++,name:'PG',jersey:1},{...px(.18,.1),color:'#AA00FF',num:pctr++,name:'',jersey:2},{...px(.18,.9),color:'#AA00FF',num:pctr++,name:'',jersey:3},{...px(.08,.2),color:'#AA00FF',num:pctr++,name:'',jersey:4},{...px(.08,.8),color:'#AA00FF',num:pctr++,name:'',jersey:5}];f.ball={...px(.43,.5)};f.arrows=[];f.screens=[];}
+else if(n==='horns'){f.players=[{...px(.47,.5),color:'#FF5E1A',num:pctr++,name:'PG',jersey:1},{...px(.30,.3),color:'#FF5E1A',num:pctr++,name:'PF',jersey:4},{...px(.30,.7),color:'#FF5E1A',num:pctr++,name:'C',jersey:5},{...px(.14,.12),color:'#FF5E1A',num:pctr++,name:'SF',jersey:2},{...px(.14,.88),color:'#FF5E1A',num:pctr++,name:'SG',jersey:3}];f.ball={...px(.47,.5)};f.arrows=[];f.screens=[];}
+render();renderFrameList();if(window.__push)window.__push();}
+window.loadT=loadT;
+function exportImg(){const a=document.createElement('a');a.download='hoopboard.png';a.href=CV.toDataURL();a.click();}
+window.exportImg=exportImg;
+function buildStickers(){const strip=document.getElementById('stk-strip');if(!strip)return;['🏀','🔥','👍','❤️','😂','🎯','⚡','💪','🏆','✅'].forEach(s=>{const b=document.createElement('button');b.className='stk-btn';b.textContent=s;b.onclick=()=>window.sendStk&&window.sendStk(s);strip.appendChild(b);});}
+function initUI(){switchRP('frames');document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('act'));document.getElementById('tb-sel').classList.add('act');buildAnnoColors();}
+window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{initCourtDims();render();},100);});
+window.addEventListener('load',()=>{initCourtDims();initUI();buildStickers();render();});
+</script>
+</body>
+</html>
