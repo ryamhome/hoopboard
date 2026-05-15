@@ -1,365 +1,246 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>HoopBoard Pro</title>
-<link rel="stylesheet" href="./style.css"/>
-</head>
-<body>
-
-<div class="su-ov" id="su-ov">
-  <div class="su-box">
-    <div class="su-logo">
-      <div class="su-icon">🏀</div>
-      <div><div class="su-title">HOOP<span>BOARD</span></div><div class="su-sub">Pro Tactics Editor</div></div>
-    </div>
-    <p class="su-desc">選擇你的身份：<br>• <b>建立新房間</b> — 產生連結分享給隊友<br>• <b>加入房間</b> — 輸入教練的代碼</p>
-    <input class="s-inp" id="su-n" placeholder="你的名稱（例：教練、彥）" maxlength="10" autocomplete="off"/>
-    <div class="s-row">
-      <button class="s-btn s-pri" onclick="createRoom()">🆕 建立房間</button>
-      <button class="s-btn s-sec" onclick="showJoin()">🔗 加入</button>
-    </div>
-    <div id="join-area" style="display:none;margin-bottom:10px">
-      <input class="s-inp" id="su-c" placeholder="房間代碼（例：ATK-7X2）" maxlength="10" style="text-transform:uppercase;margin-bottom:8px" autocomplete="off"/>
-      <button class="s-btn s-pri" onclick="joinRoom()" style="width:100%">✅ 加入房間</button>
-    </div>
-    <div class="s-note">🔒 Firebase 即時同步<br><span id="fb-st" style="color:var(--e2)">⏳ 連線中...</span></div>
-  </div>
-</div>
-
-<div id="app" style="display:none">
-<header>
-  <div class="logo">
-    <div class="logo-icon">🏀</div>
-    <div style="display:flex;flex-direction:column;line-height:1">
-      <div class="logo-name">HOOP<b>BOARD</b></div>
-      <div class="logo-tag">Pro Tactics</div>
-    </div>
-  </div>
-  <div class="room-pill" onclick="document.getElementById('share-modal').classList.add('show')">
-    <div style="display:flex;align-items:center;gap:4px"><div class="live-dot"></div><span class="live-label">Live</span></div>
-    <span class="room-code" id="rc">------</span>
-    <span class="room-users" id="on-n">0人</span>
-  </div>
-  <div class="h-acts">
-    <button class="h-btn" onclick="undoAct()">↩</button>
-    <button class="h-btn" onclick="exportImg()">📸</button>
-    <button class="h-btn" onclick="document.getElementById('share-modal').classList.add('show')">🔗</button>
-    <button class="h-btn energy" onclick="saveTactic()">💾</button>
-  </div>
-</header>
-
-<div class="main">
-  <div class="court-wrap" id="ca">
-    <div class="court-cw" id="court-cw-el">
-      <!-- ★ SVG 球場底圖（viewBox 0 0 3000 1700，含 1m=100px 邊界）-->
-      <!-- 球場本體 2800×1500，四邊各 100px 邊界 -->
-      <svg id="court-svg" viewBox="0 0 3000 1700" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <!-- 木地板漸層 -->
-          <linearGradient id="floor-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stop-color="#8B5E2A"/>
-            <stop offset="35%"  stop-color="#A0703A"/>
-            <stop offset="50%"  stop-color="#B07840"/>
-            <stop offset="65%"  stop-color="#A0703A"/>
-            <stop offset="100%" stop-color="#8B5E2A"/>
-          </linearGradient>
-          <!-- 中央光暈 -->
-          <radialGradient id="court-glow" cx="50%" cy="50%" r="40%">
-            <stop offset="0%"   stop-color="rgba(255,200,100,0.07)"/>
-            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
-          </radialGradient>
-          <!-- 橘色籃框光暈 -->
-          <filter id="basket-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <!-- 用於 clipPath 確保線條不超出球場 -->
-          <clipPath id="court-clip">
-            <rect x="100" y="100" width="2800" height="1500" rx="0"/>
-          </clipPath>
-        </defs>
-
-        <!-- 場外暗色背景 -->
-        <rect x="0" y="0" width="3000" height="1700" fill="#07111C"/>
-
-        <!-- 木地板 -->
-        <rect x="100" y="100" width="2800" height="1500" fill="url(#floor-grad)"/>
-
-        <!-- 木紋（水平細線）-->
-        <g opacity="0.06" stroke="#3D1A00" stroke-width="0.5" clip-path="url(#court-clip)">
-          <!-- 每 38px 一條（約 0.38m）-->
-          <line x1="100" y1="138" x2="2900" y2="138"/>
-          <line x1="100" y1="176" x2="2900" y2="176"/>
-          <line x1="100" y1="214" x2="2900" y2="214"/>
-          <line x1="100" y1="252" x2="2900" y2="252"/>
-          <line x1="100" y1="290" x2="2900" y2="290"/>
-          <line x1="100" y1="328" x2="2900" y2="328"/>
-          <line x1="100" y1="366" x2="2900" y2="366"/>
-          <line x1="100" y1="404" x2="2900" y2="404"/>
-          <line x1="100" y1="442" x2="2900" y2="442"/>
-          <line x1="100" y1="480" x2="2900" y2="480"/>
-          <line x1="100" y1="518" x2="2900" y2="518"/>
-          <line x1="100" y1="556" x2="2900" y2="556"/>
-          <line x1="100" y1="594" x2="2900" y2="594"/>
-          <line x1="100" y1="632" x2="2900" y2="632"/>
-          <line x1="100" y1="670" x2="2900" y2="670"/>
-          <line x1="100" y1="708" x2="2900" y2="708"/>
-          <line x1="100" y1="746" x2="2900" y2="746"/>
-          <line x1="100" y1="784" x2="2900" y2="784"/>
-          <line x1="100" y1="822" x2="2900" y2="822"/>
-          <line x1="100" y1="860" x2="2900" y2="860"/>
-          <line x1="100" y1="898" x2="2900" y2="898"/>
-          <line x1="100" y1="936" x2="2900" y2="936"/>
-          <line x1="100" y1="974" x2="2900" y2="974"/>
-          <line x1="100" y1="1012" x2="2900" y2="1012"/>
-          <line x1="100" y1="1050" x2="2900" y2="1050"/>
-          <line x1="100" y1="1088" x2="2900" y2="1088"/>
-          <line x1="100" y1="1126" x2="2900" y2="1126"/>
-          <line x1="100" y1="1164" x2="2900" y2="1164"/>
-          <line x1="100" y1="1202" x2="2900" y2="1202"/>
-          <line x1="100" y1="1240" x2="2900" y2="1240"/>
-          <line x1="100" y1="1278" x2="2900" y2="1278"/>
-          <line x1="100" y1="1316" x2="2900" y2="1316"/>
-          <line x1="100" y1="1354" x2="2900" y2="1354"/>
-          <line x1="100" y1="1392" x2="2900" y2="1392"/>
-          <line x1="100" y1="1430" x2="2900" y2="1430"/>
-          <line x1="100" y1="1468" x2="2900" y2="1468"/>
-          <line x1="100" y1="1506" x2="2900" y2="1506"/>
-          <line x1="100" y1="1544" x2="2900" y2="1544"/>
-          <line x1="100" y1="1582" x2="2900" y2="1582"/>
-        </g>
-
-        <!-- 中央光暈 overlay -->
-        <rect x="100" y="100" width="2800" height="1500" fill="url(#court-glow)"/>
-
-        <!-- ══ 球場線條（1m=100px，場地原點 x=100, y=100）══ -->
-        <g clip-path="url(#court-clip)" fill="none" stroke="rgba(255,255,255,0.88)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-
-          <!-- 禁區底色（左）：x=100~680, y=355~1145 (5.8m×4.9m) -->
-          <rect x="100" y="605" width="580" height="490" fill="rgba(28,60,130,0.28)" stroke="none"/>
-          <!-- 禁區底色（右）：x=2320~2900, y=355~1145 -->
-          <rect x="2320" y="605" width="580" height="490" fill="rgba(28,60,130,0.28)" stroke="none"/>
-
-          <!-- 場地外框 -->
-          <rect x="100" y="100" width="2800" height="1500" stroke="rgba(255,255,255,0.88)" stroke-width="3"/>
-
-          <!-- 中線 -->
-          <line x1="1500" y1="100" x2="1500" y2="1600"/>
-
-          <!-- 中圈（半徑 1.8m = 180px）-->
-          <circle cx="1500" cy="850" r="180"/>
-
-          <!-- 中心點 -->
-          <circle cx="1500" cy="850" r="6" fill="rgba(255,255,255,0.88)" stroke="none"/>
-
-          <!-- ══ 左半場 ══ -->
-          <!-- 禁區邊線 -->
-          <line x1="100"  y1="605"  x2="680"  y2="605"/>   <!-- 禁區上邊：FIBA 4.9m 寬 -->
-          <line x1="100"  y1="1095" x2="680"  y2="1095"/>  <!-- 禁區下邊 -->
-          <line x1="680"  y1="605"  x2="680"  y2="1095"/>  <!-- 罰球線 -->
-
-          <!-- 禁區刻度（距底線 175, 275, 375px = 1.75m, 2.75m, 3.75m）-->
-          <line x1="275" y1="605"  x2="275" y2="585"/>
-          <line x1="275" y1="1095" x2="275" y2="1115"/>
-          <line x1="375" y1="605"  x2="375" y2="585"/>
-          <line x1="375" y1="1095" x2="375" y2="1115"/>
-          <line x1="475" y1="605"  x2="475" y2="585"/>
-          <line x1="475" y1="1095" x2="475" y2="1115"/>
-
-          <!-- 罰球圈（圓心 (680,850)，半徑 180px；朝籃框側實線，朝場中虛線）-->
-          <!-- 朝籃框實線半圓：從 top (680,670) 到 bot (680,1030)，往左 -->
-          <path d="M 680 670 A 180 180 0 0 0 680 1030"/>
-          <!-- 朝場中虛線半圓 -->
-          <path d="M 680 670 A 180 180 0 0 1 680 1030" stroke-dasharray="28 18"/>
-
-          <!-- 限制區弧（圓心籃框 (257.5,850)，半徑 125px）-->
-          <path d="M 257.5 725 A 125 125 0 0 1 257.5 975"/>
-
-          <!-- 三分線：底角直線 -->
-          <!-- 上方：(100,190) → (400,190)，即 y=0.9m=90px → y=100+90=190 -->
-          <line x1="100"  y1="190"  x2="400"  y2="190"/>
-          <!-- 下方：(100,1510) → (400,1510)，即 y=14.1m → y=100+1410=1510 -->
-          <line x1="100"  y1="1510" x2="400"  y2="1510"/>
-          <!-- 三分弧：圓心籃框(257.5,850)，從上端點到下端點 -->
-          <!-- 上端點(400,190) 角度：atan2(190-850, 400-257.5) = atan2(-660, 142.5) -->
-          <!-- 下端點(400,1510) 角度：atan2(1510-850, 400-257.5) = atan2(660, 142.5) -->
-          <!-- 半徑 = sqrt(142.5²+660²) ≈ 675px = 6.75m ✓ -->
-          <path d="M 400 190 A 675 675 0 0 1 400 1510"/>
-
-          <!-- 籃板（面距底線 142.5px=1.425m，半寬 91.5px=0.915m）-->
-          <line x1="242.5" y1="758.5" x2="242.5" y2="941.5" stroke-width="5"/>
-
-          <!-- 籃框（圓心距底線 157.5px=1.575m）-->
-          <circle cx="257.5" cy="850" r="22.5" stroke="#FF5E1A" stroke-width="5" filter="url(#basket-glow)"/>
-
-          <!-- ══ 右半場（左右鏡像）══ -->
-          <!-- 禁區邊線 -->
-          <line x1="2900" y1="605"  x2="2320" y2="605"/>
-          <line x1="2900" y1="1095" x2="2320" y2="1095"/>
-          <line x1="2320" y1="605"  x2="2320" y2="1095"/>
-
-          <!-- 禁區刻度 -->
-          <line x1="2725" y1="605"  x2="2725" y2="585"/>
-          <line x1="2725" y1="1095" x2="2725" y2="1115"/>
-          <line x1="2625" y1="605"  x2="2625" y2="585"/>
-          <line x1="2625" y1="1095" x2="2625" y2="1115"/>
-          <line x1="2525" y1="605"  x2="2525" y2="585"/>
-          <line x1="2525" y1="1095" x2="2525" y2="1115"/>
-
-          <!-- 罰球圈（圓心 (2320,850)）-->
-          <path d="M 2320 670 A 180 180 0 0 1 2320 1030"/>
-          <path d="M 2320 670 A 180 180 0 0 0 2320 1030" stroke-dasharray="28 18"/>
-
-          <!-- 限制區弧（圓心籃框 (2742.5,850)）-->
-          <path d="M 2742.5 725 A 125 125 0 0 0 2742.5 975"/>
-
-          <!-- 三分線：底角直線 -->
-          <line x1="2900" y1="190"  x2="2600" y2="190"/>
-          <line x1="2900" y1="1510" x2="2600" y2="1510"/>
-          <!-- 三分弧：圓心 (2742.5,850) 右側 -->
-          <path d="M 2600 190 A 675 675 0 0 0 2600 1510"/>
-
-          <!-- 籃板（右側）-->
-          <line x1="2757.5" y1="758.5" x2="2757.5" y2="941.5" stroke-width="5"/>
-
-          <!-- 籃框（右側）-->
-          <circle cx="2742.5" cy="850" r="22.5" stroke="#FF5E1A" stroke-width="5" filter="url(#basket-glow)"/>
-
-        </g>
-      </svg>
-      <!-- ★ canvas 疊加：背景透明，只畫球員/球/戰術線 -->
-      <canvas id="court" class="c-def" style="position:absolute;top:0;left:0;z-index:2;background:transparent;"></canvas>
-      <!-- draw-canvas 疊在最上方，畫圖標註用 -->
-      <canvas id="draw-canvas"></canvas>
-    </div>
-    <div id="box-select-rect" class="box-select-rect"></div>
-    <!-- 廣播 pill（全體可見） -->
-    <div class="bcast-pill" id="bcast-pill">
-      <span class="bcast-label" id="bcast-label">▶ 播放中</span>
-      <div class="bcast-prog-wrap"><div class="bcast-prog-fill" id="bcast-fill" style="width:0%"></div></div>
-      <span class="bcast-frame-info" id="bcast-frame-info"></span>
-      <div class="bcast-btns">
-        <button class="bcast-react bcast-like" onclick="sendReaction('👍')">👍 讚</button>
-        <button class="bcast-react bcast-pause-req" onclick="sendPauseRequest()">✋ 暫停</button>
-      </div>
-    </div>
-    <!-- 標註工具列（畫圖模式時） -->
-    <div class="anno-bar" id="anno-bar">
-      <button class="anno-btn act" id="anno-pen-btn" onclick="setAnnoTool('pen',this)" title="畫筆">✏️</button>
-      <button class="anno-btn" id="anno-arr-btn" onclick="setAnnoTool('arrow',this)" title="箭頭">→</button>
-      <button class="anno-btn" onclick="clearAnno()" title="清除">🗑</button>
-      <div class="anno-sep"></div>
-      <div id="anno-colors"></div>
-    </div>
-    <!-- ★ 永遠顯示的畫圖開關 FAB -->
-    <button class="anno-fab" id="anno-fab" onclick="toggleAnno()" title="開啟/關閉畫圖討論">✏️</button>
-    <!-- 播放控制條（主持人） -->
-    <div class="anim-bar" id="anim-bar">
-      <span style="font-size:10px;color:var(--t3)">動畫</span>
-      <div class="ap-track"><div class="ap-fill" id="ap-fill"></div></div>
-      <span class="ap-prog" id="ap-prog">0%</span>
-      <div class="spd-g">
-        <button class="spd-b" onclick="setSpd(.5,this)">.5x</button>
-        <button class="spd-b act" onclick="setSpd(1,this)">1x</button>
-        <button class="spd-b" onclick="setSpd(2,this)">2x</button>
-      </div>
-      <button class="ap-play" id="ap-pb" onclick="window.toggleAnim()">▶ 播放</button>
-      <button class="ap-stop" onclick="window.stopAnim()">■ 停止</button>
-    </div>
-    <div class="ov-pill sync-pill" id="sync-pill"><div class="live-dot"></div><span id="sync-txt">連線中...</span></div>
-    <div class="npw" id="npw">
-      <span class="npw-lbl">球員資訊</span>
-      <div class="npw-row">
-        <input class="npw-inp" id="np-n" placeholder="名稱" maxlength="6" autocomplete="off"/>
-        <input class="npw-inp npw-num" id="np-num" placeholder="#" type="number" min="1" max="99"/>
-      </div>
-      <div class="npw-btns">
-        <button class="npw-skip" onclick="cancelNP()">略過</button>
-        <button class="npw-ok" onclick="confirmNP()">確定</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="right-panel">
-    <div class="rp-tabs">
-      <div class="rp-tab act" id="rt-frames" onclick="switchRP('frames')">🎬 幀動畫</div>
-      <div class="rp-tab" id="rt-tools" onclick="switchRP('tools')">⚙️ 工具</div>
-    </div>
-    <div class="rp-body" id="rp-body"></div>
-  </div>
-
-  <div class="chat-panel">
-    <div class="chat-msgs-wrap" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-      <div class="chat-hdr"><div class="chat-title">聊天室</div><span class="chat-unread" id="chat-unread">0</span></div>
-      <div class="chat-msgs" id="chat-msgs"><div class="msg-sys">歡迎使用 HoopBoard Pro 🏀</div></div>
-    </div>
-    <div class="chat-inp-wrap" style="flex-shrink:0;border-top:1px solid var(--l1);">
-      <div class="chat-ia">
-        <div class="stk-strip" id="stk-strip"></div>
-        <div class="chat-row">
-          <input class="chat-inp" id="chat-inp" placeholder="訊息…" maxlength="100" autocomplete="off"/>
-          <button class="chat-send" onclick="sendMsg()">送</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="btb">
-  <button class="tb-btn act" id="tb-sel" onclick="setTool('select',this)" title="選取；拖曳空白處可框選">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-7 1-4 7z"/></svg><span>選取</span>
-  </button>
-  <button class="tb-btn" id="tb-box" onclick="setTool('box',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="2" stroke-dasharray="4 2"/></svg><span>框選</span>
-  </button>
-  <button class="tb-btn" id="tb-ply" onclick="setTool('player',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20c0-4 2.7-7 6-7s6 3 6 7"/></svg><span>球員</span>
-  </button>
-  <button class="tb-btn" id="tb-bal" onclick="setTool('ball',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a9 9 0 0 0 0 18M12 3a9 9 0 0 1 0 18"/></svg><span>球</span>
-  </button>
-  <div class="tb-sep"></div>
-  <button class="tb-btn" id="tb-cut" onclick="setTool('cut',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M14 7l5 5-5 5"/></svg><span>跑位</span>
-  </button>
-  <button class="tb-btn" id="tb-pass" onclick="setTool('pass',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"><path d="M5 12h14M14 7l5 5-5 5"/></svg><span>傳球</span>
-  </button>
-  <button class="tb-btn" id="tb-drib" onclick="setTool('drib',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12 Q8 6 12 12 Q16 18 20 12"/></svg><span>運球</span>
-  </button>
-  <button class="tb-btn" id="tb-scr" onclick="setTool('screen',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="7" width="6" height="10" rx="1"/><path d="M5 12h4M15 12h4"/></svg><span>掩護</span>
-  </button>
-  <div class="tb-sep"></div>
-  <button class="tb-btn" onclick="delSel()" style="color:var(--rd)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg><span>刪除</span>
-  </button>
-  <button class="tb-btn" onclick="addFrame()" style="color:var(--gn)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>新幀</span>
-  </button>
-</div>
-</div>
-
-<div class="modal-ov" id="share-modal" onclick="if(event.target===this)this.classList.remove('show')">
-  <div class="modal-box">
-    <div class="modal-title">🔗 分享戰術板</div>
-    <div class="modal-sub">傳連結給球員，進入後即時同步</div>
-    <div class="m-link-row"><input class="m-link-inp" id="share-link" readonly/><button class="m-copy" onclick="copyLink()">複製</button></div>
-    <div class="m-share-row">
-      <button class="m-share-opt" onclick="shareLine()"><span>💬</span>LINE</button>
-      <button class="m-share-opt" onclick="copyLink()"><span>📋</span>複製</button>
-    </div>
-    <button class="m-close" onclick="document.getElementById('share-modal').classList.remove('show')">關閉</button>
-  </div>
-</div>
-
-
-<script src="./js/helper.js"></script>
-<script src="./js/court-presets.js"></script>
-<script type="module" src="./js/firebase-sync.js"></script>
-<script src="./js/main.js"></script>
-</body>
-</html>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+:root{
+  --bg0:#060E18;--bg1:#0A1520;--bg2:#0F1E2F;--bg3:#162535;--bg4:#1D2F42;
+  --e1:#FF5E1A;--e2:#FF8C42;--e3:#FFB347;--eg:rgba(255,94,26,.35);
+  --a1:#00D4FF;--gn:#00E676;--gn-d:rgba(0,230,118,.15);
+  --yw:#FFD600;--rd:#FF3D5A;--rd-d:rgba(255,61,90,.15);
+  --t1:#FFF;--t2:rgba(255,255,255,.85);--t3:rgba(255,255,255,.55);--t4:rgba(255,255,255,.3);
+  --l1:rgba(255,255,255,.06);--l2:rgba(255,255,255,.1);--l3:rgba(255,255,255,.18);
+  --fd:'Barlow Condensed',sans-serif;--ft:'Noto Sans TC',sans-serif;
+  --hh:52px;--tbh:58px;--pw:270px;--cw:205px;
+  --sb:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg0);font-family:var(--ft);color:var(--t1);touch-action:none;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px;}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh;}
+header{display:flex;align-items:center;gap:10px;padding:0 14px;height:var(--hh);background:var(--bg2);border-bottom:1px solid var(--l1);flex-shrink:0;z-index:30;position:relative;}
+header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--e1),var(--e2),var(--e3),transparent);opacity:.7;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--e1),var(--e3));display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 16px var(--eg);flex-shrink:0;}
+.logo-name{font-family:var(--fd);font-size:17px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(135deg,#fff,rgba(255,255,255,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-name b{background:linear-gradient(135deg,var(--e1),var(--e3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-tag{font-family:var(--fd);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t4);}
+.room-pill{display:flex;align-items:center;gap:7px;padding:5px 12px;background:rgba(255,255,255,.04);border:1px solid var(--l2);border-radius:20px;cursor:pointer;margin-right:auto;}
+.room-pill:hover{background:rgba(255,255,255,.08);}
+.room-code{font-family:var(--fd);font-size:14px;font-weight:700;letter-spacing:3px;color:var(--e2);}
+.room-users{font-size:11px;color:var(--t3);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--gn);animation:lp 2s infinite;}
+@keyframes lp{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,230,118,.4);}50%{opacity:.6;box-shadow:0 0 0 4px rgba(0,230,118,0);}}
+.live-label{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gn);text-transform:uppercase;}
+.h-acts{display:flex;gap:5px;}
+.h-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.04);color:var(--t3);cursor:pointer;font-size:14px;transition:all .2s;flex-shrink:0;}
+.h-btn:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.h-btn.energy{background:linear-gradient(135deg,var(--e1),var(--e2));border-color:transparent;color:#fff;box-shadow:0 0 12px var(--eg);}
+.main{flex:1;display:flex;overflow:hidden;min-height:0;}
+/* COURT */
+.court-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#0D1B2A 0%,var(--bg0) 70%);}
+.court-cw{border-radius:14px;position:relative;box-shadow:0 0 60px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.07),0 0 20px var(--eg);overflow:hidden;}
+/* ★ SVG 球場底圖（最底層）*/
+#court-svg{display:block;width:100%;height:100%;border-radius:14px;}
+/* ★ canvas 疊在 SVG 上，背景透明，只畫球員/戰術 */
+canvas{display:block;touch-action:none;background:transparent;}
+#court{position:absolute;top:0;left:0;background:transparent;}
+canvas.c-sel{cursor:default;}canvas.c-def{cursor:crosshair;}
+/* ★ draw-canvas: 疊在 canvas 上，預設不攔截事件 */
+#draw-canvas{position:absolute;top:0;left:0;border-radius:14px;pointer-events:none;z-index:5;}
+#draw-canvas.draw-on{pointer-events:all;cursor:crosshair;}
+.ov-pill{position:absolute;background:rgba(10,21,32,.94);backdrop-filter:blur(8px);border:1px solid var(--l2);border-radius:20px;display:flex;align-items:center;gap:6px;padding:5px 13px;font-size:10px;white-space:nowrap;pointer-events:none;}
+.sync-pill{bottom:12px;left:50%;transform:translateX(-50%);color:var(--gn);border-color:rgba(0,230,118,.2);}
+.sync-pill.off{color:var(--rd);border-color:rgba(255,61,90,.2);}
+/* 廣播 pill */
+.bcast-pill{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(10,21,32,.96);backdrop-filter:blur(10px);border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:8px 16px;display:none;align-items:center;gap:10px;white-space:nowrap;z-index:20;box-shadow:0 0 20px rgba(255,215,0,.15);}
+.bcast-pill.show{display:flex;}
+.bcast-prog-wrap{width:100px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.bcast-prog-fill{height:100%;background:linear-gradient(90deg,var(--e1),var(--e3));border-radius:2px;}
+.bcast-label{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--yw);}
+.bcast-frame-info{font-size:10px;color:var(--t3);}
+.bcast-btns{display:flex;gap:5px;}
+.bcast-react{padding:4px 10px;border-radius:6px;border:none;font-size:11px;cursor:pointer;font-family:var(--ft);}
+.bcast-like{background:rgba(0,230,118,.12);color:var(--gn);border:1px solid rgba(0,230,118,.25);}
+.bcast-pause-req{background:rgba(255,94,26,.12);color:var(--e2);border:1px solid rgba(255,94,26,.25);}
+/* 標註工具列 */
+.anno-bar{position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(10,21,32,.96);border:1px solid var(--l2);border-radius:10px;display:none;flex-direction:column;gap:4px;padding:8px 6px;backdrop-filter:blur(10px);z-index:15;}
+.anno-bar.show{display:flex;}
+.anno-btn{width:36px;height:36px;border-radius:7px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.anno-btn:hover{background:rgba(255,255,255,.1);color:var(--t2);}
+.anno-btn.act{background:rgba(255,94,26,.2);color:var(--e2);}
+.anno-sep{height:1px;background:var(--l2);margin:2px 0;}
+.anno-color{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;margin:0 auto;flex-shrink:0;}
+.anno-color.act{border-color:#fff;}
+/* ★ 永遠顯示的畫圖FAB */
+.anno-fab{position:absolute;right:12px;bottom:50px;width:42px;height:42px;border-radius:50%;border:1px solid var(--l2);background:rgba(10,21,32,.92);color:var(--t3);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:15;}
+.anno-fab:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.anno-fab.on{background:rgba(255,94,26,.2);border-color:var(--e1);color:var(--e2);box-shadow:0 0 10px var(--eg);}
+/* 播放控制條 */
+.anim-bar{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);background:rgba(10,21,32,.96);border:1px solid var(--l2);border-radius:12px;padding:7px 14px;display:none;align-items:center;gap:9px;backdrop-filter:blur(10px);z-index:10;}
+.anim-bar.show{display:flex;}
+.ap-prog{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--e2);min-width:36px;}
+.ap-play{padding:5px 13px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);box-shadow:0 0 8px var(--eg);}
+.ap-stop{padding:5px 10px;border-radius:7px;border:1px solid var(--l2);background:rgba(255,255,255,.06);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--ft);}
+.spd-g{display:flex;gap:3px;}
+.spd-b{padding:3px 7px;border-radius:5px;border:1px solid var(--l2);background:rgba(255,255,255,.05);color:var(--t4);font-size:9px;cursor:pointer;font-weight:600;}
+.spd-b.act{background:var(--eg);color:var(--e2);border-color:rgba(255,94,26,.4);}
+.ap-track{height:3px;width:80px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+.ap-fill{height:100%;background:linear-gradient(90deg,var(--e1),var(--e3));border-radius:2px;transition:width .1s;}
+/* 球員名稱 prompt */
+.npw{display:none;position:absolute;z-index:60;background:var(--bg3);border:1px solid var(--l2);border-radius:10px;padding:13px;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+.npw-lbl{font-size:10px;color:var(--t3);margin-bottom:8px;display:block;font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-family:var(--fd);}
+.npw-row{display:flex;gap:6px;margin-bottom:8px;}
+.npw-inp{flex:1;padding:7px 9px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid var(--l2);color:var(--t1);font-size:13px;font-family:var(--ft);outline:none;}
+.npw-inp:focus{border-color:var(--e1);}
+.npw-num{width:50px;text-align:center;}
+.npw-btns{display:flex;gap:6px;}
+.npw-ok{flex:1;padding:8px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--ft);}
+.npw-skip{flex:1;padding:8px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.05);color:var(--t2);font-size:11px;cursor:pointer;font-family:var(--ft);}
+.box-select-rect{position:absolute;border:1px dashed var(--yw);background:rgba(255,214,0,.10);pointer-events:none;z-index:8;display:none;}
+/* RIGHT PANEL */
+.right-panel{width:var(--pw);flex-shrink:0;background:var(--bg2);border-left:1px solid var(--l1);display:flex;flex-direction:column;overflow:hidden;}
+.rp-tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--l1);flex-shrink:0;}
+.rp-tab{flex:1;padding:10px 4px;text-align:center;font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.rp-tab:hover{color:var(--t2);}
+.rp-tab.act{color:var(--e2);border-bottom-color:var(--e1);}
+.rp-body{flex:1;overflow-y:auto;overflow-x:hidden;}
+.anim-ctl{padding:12px;background:var(--bg1);border-bottom:1px solid var(--l1);flex-shrink:0;}
+.ctl-ttl{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t4);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ctl-ttl::before{content:'';width:12px;height:2px;background:linear-gradient(90deg,var(--e1),var(--e2));border-radius:1px;}
+.ctl-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.ctl-play{padding:7px 14px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);flex:1;box-shadow:0 0 10px var(--eg);}
+.ctl-stop{padding:7px 10px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.05);color:var(--t2);font-size:10px;cursor:pointer;font-family:var(--ft);}
+.ctl-add{padding:7px 10px;border-radius:6px;border:1px solid rgba(0,230,118,.25);background:var(--gn-d);color:var(--gn);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);}
+.ctl-prog{font-family:var(--fd);font-size:13px;font-weight:900;color:var(--e2);min-width:38px;text-align:right;}
+.ctl-track{height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:4px;}
+.ctl-fill{height:100%;background:linear-gradient(90deg,var(--e1),var(--e3));border-radius:2px;width:0%;}
+.bcast-ctl{padding:10px 12px;background:rgba(0,212,255,.04);border-bottom:1px solid rgba(0,212,255,.1);flex-shrink:0;}
+.bcast-ctl-title{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--a1);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.bcast-ctl-title::before{content:'';width:10px;height:2px;background:var(--a1);border-radius:1px;}
+.bcast-main-btn{width:100%;padding:9px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--ft);transition:all .2s;margin-bottom:6px;}
+.bcast-main-btn.idle{background:linear-gradient(135deg,var(--a1),#0099BB);color:#000;}
+.bcast-main-btn.live{background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;box-shadow:0 0 14px var(--eg);}
+.bcast-desc{font-size:9px;color:var(--t4);line-height:1.6;}
+.frame-list{flex:1;overflow-y:auto;padding:8px;}
+.fi{border-radius:10px;border:1px solid var(--l1);background:var(--bg3);margin-bottom:6px;cursor:pointer;transition:all .2s;overflow:hidden;position:relative;user-select:none;}
+.fi:hover{border-color:var(--l3);background:var(--bg4);}
+.fi.act{border-color:var(--e1);background:linear-gradient(135deg,rgba(255,94,26,.12),rgba(255,140,66,.06));box-shadow:0 0 12px rgba(255,94,26,.2);}
+.fi.act::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--e1),var(--e3));border-radius:3px 0 0 3px;}
+.fi.dragging{opacity:.35;border-style:dashed;}
+.fi.drag-over{border-color:var(--a1);background:rgba(0,212,255,.06);}
+.fi-hdr{display:flex;align-items:center;gap:6px;padding:7px 10px;}
+.fi-drag{font-size:13px;color:var(--t4);cursor:grab;flex-shrink:0;}
+.fi-num{font-family:var(--fd);font-size:13px;font-weight:900;width:20px;color:var(--e2);flex-shrink:0;}
+.fi-name{flex:1;font-size:10px;font-weight:500;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text;}
+.fi-name-inp{display:none;flex:1;background:transparent;border:none;border-bottom:1px solid var(--e1);color:var(--t1);font-size:10px;font-family:var(--ft);outline:none;padding:0;}
+.fi-acts{display:flex;gap:2px;flex-shrink:0;}
+.fa-btn{width:22px;height:22px;border:none;background:transparent;color:var(--t4);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;border-radius:5px;}
+.fa-btn:hover{background:rgba(255,255,255,.1);color:var(--t1);}
+.fa-btn.del:hover{background:var(--rd-d);color:var(--rd);}
+.fi-prev{padding:0 8px 8px;}
+.fi-canvas{border-radius:6px;display:block;width:100%;background:#07111B;}
+.tp-body{padding:12px;}
+.tp-sec{margin-bottom:16px;}
+.tp-ttl{font-family:var(--fd);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t4);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.tp-ttl::before{content:'';width:10px;height:2px;background:linear-gradient(90deg,var(--e1),var(--e2));border-radius:1px;}
+.c-swatches{display:flex;gap:6px;flex-wrap:wrap;}
+.c-sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.c-sw:hover{transform:scale(1.15);}
+.c-sw.act{border-color:#fff;transform:scale(1.1);}
+.sz-row{display:flex;align-items:center;gap:10px;}
+.sz-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;cursor:pointer;}
+.sz-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--e1),var(--e2));cursor:pointer;}
+.sz-val{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--e2);min-width:22px;}
+.tc-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.tc-card{padding:9px 6px;border-radius:10px;background:var(--bg3);border:1px solid var(--l1);cursor:pointer;text-align:center;transition:all .2s;}
+.tc-card:hover{border-color:rgba(255,94,26,.4);background:rgba(255,94,26,.08);}
+.tc-card:active{transform:scale(.97);}
+.tc-icon{font-size:18px;display:block;margin-bottom:3px;}
+.tc-label{font-size:9px;color:var(--t3);font-weight:600;line-height:1.3;}
+.tc-label.danger{color:var(--rd);}
+/* CHAT */
+.chat-panel{width:var(--cw);flex-shrink:0;background:var(--bg2);border-left:1px solid var(--l1);display:flex;flex-direction:column;}
+.chat-hdr{padding:9px 12px;border-bottom:1px solid var(--l1);flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.chat-title{font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);flex:1;display:flex;align-items:center;gap:5px;}
+.chat-title::before{content:'';width:10px;height:2px;background:var(--a1);border-radius:1px;}
+.chat-unread{background:var(--e1);color:#fff;border-radius:8px;padding:0 5px;font-size:8px;font-weight:700;display:none;}
+.chat-msgs{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth;}
+.msg{display:flex;flex-direction:column;gap:1px;}
+.msg-top{display:flex;align-items:center;gap:4px;}
+.msg-av{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
+.msg-who{font-size:9px;font-weight:700;color:var(--e2);}
+.msg-who.me{color:var(--gn);}
+.msg-when{font-size:8px;color:var(--t4);}
+.msg-body{font-size:10px;padding:4px 8px;line-height:1.4;word-break:break-all;background:rgba(255,255,255,.05);border-radius:0 7px 7px 7px;margin-left:17px;}
+.msg-body.mine{background:rgba(255,94,26,.12);border:1px solid rgba(255,94,26,.15);border-radius:7px 0 7px 7px;}
+.msg-stk{font-size:22px;margin-left:17px;}
+.msg-sys{font-size:9px;color:var(--t4);text-align:center;font-style:italic;padding:2px 0;}
+.msg-react{font-size:10px;text-align:center;padding:3px 0;color:var(--yw);}
+.msg-pause{font-size:10px;text-align:center;padding:3px 0;color:var(--e2);}
+.msg-likes{margin-left:17px;display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;}
+.like-btn{font-size:9px;padding:1px 5px;border-radius:7px;border:1px solid var(--l1);background:rgba(255,255,255,.04);cursor:pointer;color:var(--t4);}
+.like-btn:hover,.like-btn.liked{background:rgba(255,94,26,.12);border-color:rgba(255,94,26,.3);color:var(--e2);}
+.chat-ia{flex-shrink:0;border-top:1px solid var(--l1);}
+.stk-strip{display:flex;gap:2px;padding:4px 8px;overflow-x:auto;}
+.stk-strip::-webkit-scrollbar{display:none;}
+.stk-btn{font-size:16px;cursor:pointer;padding:2px;border:none;background:transparent;flex-shrink:0;}
+.chat-row{display:flex;gap:5px;padding:5px 8px;}
+.chat-inp{flex:1;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--l2);color:var(--t1);font-size:11px;font-family:var(--ft);outline:none;min-width:0;}
+.chat-inp:focus{border-color:var(--e1);}
+.chat-send{padding:7px 10px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ft);flex-shrink:0;}
+/* TOOLBAR */
+.btb{display:flex;align-items:center;height:var(--tbh);flex-shrink:0;background:var(--bg2);border-top:1px solid var(--l1);padding:0 6px;gap:2px;overflow-x:auto;scrollbar-width:none;padding-bottom:var(--sb);min-height:calc(var(--tbh) + var(--sb));}
+.btb::-webkit-scrollbar{display:none;}
+.tb-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:50px;height:48px;border-radius:6px;border:none;background:transparent;color:var(--t4);cursor:pointer;gap:3px;flex-shrink:0;transition:all .15s;}
+.tb-btn svg{width:18px;height:18px;}
+.tb-btn span{font-size:8px;font-weight:600;white-space:nowrap;font-family:var(--fd);}
+.tb-btn:hover{background:rgba(255,255,255,.07);color:var(--t2);}
+.tb-btn.act{background:rgba(255,94,26,.12);color:var(--e2);border:1px solid rgba(255,94,26,.25);}
+.tb-sep{width:1px;height:32px;flex-shrink:0;margin:0 3px;background:linear-gradient(180deg,transparent,var(--l2),transparent);}
+@media(max-width:600px){
+  .right-panel{display:none;}
+  .chat-panel{width:100%;height:160px;border-left:none;border-top:1px solid var(--l1);flex-direction:row;}
+  .chat-msgs-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .chat-inp-wrap{width:150px;flex-shrink:0;border-left:1px solid var(--l1);display:flex;flex-direction:column;}
+  .main{flex-direction:column;}
+  .stk-strip{display:none;}
+}
+@media(min-width:601px){.chat-msgs-wrap{display:contents;}.chat-inp-wrap{display:contents;}}
+/* SETUP */
+.su-ov{position:fixed;inset:0;background:var(--bg0);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;background-image:radial-gradient(ellipse at 30% 20%,rgba(255,94,26,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(0,212,255,.05) 0%,transparent 50%);}
+.su-box{background:var(--bg2);border:1px solid var(--l2);border-radius:20px;padding:28px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;overflow:hidden;}
+.su-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--e1),var(--e2),var(--e3));}
+.su-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.su-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--e1),var(--e3));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px var(--eg);}
+.su-title{font-family:var(--fd);font-size:26px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}
+.su-title span{color:var(--e2);}
+.su-sub{font-size:8px;color:var(--t4);letter-spacing:3px;text-transform:uppercase;font-family:var(--fd);}
+.su-desc{font-size:11px;color:var(--t3);margin:16px 0 14px;line-height:1.8;}
+.su-desc b{color:var(--t1);}
+.s-inp{width:100%;padding:11px 13px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--l2);color:var(--t1);font-size:14px;margin-bottom:10px;font-family:var(--ft);outline:none;}
+.s-inp:focus{border-color:var(--e1);}
+.s-row{display:flex;gap:8px;margin-bottom:10px;}
+.s-btn{flex:1;padding:12px;border-radius:6px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--ft);}
+.s-pri{background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;box-shadow:0 0 14px var(--eg);}
+.s-sec{background:rgba(255,255,255,.06);color:var(--t2);border:1px solid var(--l2);}
+.s-note{font-size:10px;color:var(--t4);line-height:1.8;background:rgba(255,255,255,.03);border-radius:6px;padding:10px 12px;border:1px solid var(--l1);}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-ov.show{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--l2);border-radius:14px;padding:22px;width:100%;max-width:320px;position:relative;overflow:hidden;}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a1),var(--e1));}
+.modal-title{font-family:var(--fd);font-size:20px;font-weight:900;letter-spacing:1px;margin-bottom:4px;}
+.modal-sub{font-size:11px;color:var(--t3);margin-bottom:14px;}
+.m-link-row{display:flex;gap:6px;margin-bottom:11px;}
+.m-link-inp{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--l2);border-radius:6px;padding:7px 10px;color:var(--t2);font-size:10px;font-family:monospace;}
+.m-copy{padding:7px 12px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--e1),var(--e2));color:#fff;font-size:10px;font-weight:700;cursor:pointer;}
+.m-share-row{display:flex;gap:6px;margin-bottom:12px;}
+.m-share-opt{flex:1;padding:9px 6px;border-radius:6px;border:1px solid var(--l2);background:rgba(255,255,255,.04);color:var(--t2);font-size:10px;cursor:pointer;text-align:center;}
+.m-share-opt:hover{border-color:rgba(255,94,26,.4);}
+.m-share-opt span{display:block;font-size:18px;margin-bottom:3px;}
+.m-close{width:100%;padding:8px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--l2);color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--ft);}
+/* Court Engine v2 controls */
+.court-preset-panel{position:absolute;left:12px;top:12px;z-index:18;background:rgba(10,21,32,.94);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px;backdrop-filter:blur(10px);display:flex;gap:6px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.court-preset-title{font-family:var(--fd);font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--e2);white-space:nowrap}
+.court-preset-panel select,.court-preset-panel button{height:30px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:#0A1520;color:#fff;font-size:11px;padding:0 8px;outline:none;font-family:var(--ft)}
+.court-preset-panel select{max-width:150px}
+.court-preset-panel button{cursor:pointer;background:rgba(255,94,26,.16);color:var(--e2);font-weight:700}
+.court-preset-panel button:hover{background:rgba(255,94,26,.28)}
+@media(max-width:720px){.court-preset-panel{left:8px;top:8px;gap:4px;padding:6px}.court-preset-panel select{max-width:108px;font-size:10px}.court-preset-title{display:none}}
